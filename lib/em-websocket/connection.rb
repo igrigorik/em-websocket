@@ -11,6 +11,8 @@ module EventMachine
         @options = options
         @debug = options[:debug] || false
         @state = :handshake
+
+        debug [:initialize]
       end
 
       def receive_data(data)
@@ -24,7 +26,7 @@ module EventMachine
         @onclose.call if @onclose
       end
 
-      def dispatch(data)
+      def dispatch(data = nil)
         while case @state
           when :handshake
             new_request(data)
@@ -46,8 +48,8 @@ module EventMachine
         upgrade = "HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
         upgrade << "Upgrade: WebSocket\r\n"
         upgrade << "Connection: Upgrade\r\n"
-        upgrade << "WebSocket-Origin: origin\r\n"
-        upgrade << "WebSocket-Location: ws://host/path\r\n\r\n"
+        upgrade << "WebSocket-Origin: file://\r\n"
+        upgrade << "WebSocket-Location: ws://localhost:8080/\r\n\r\n"
 
         # upgrade connection and notify client callback
         # about completed handshake
@@ -55,11 +57,16 @@ module EventMachine
 
         @state = :connected
         @onopen.call if @onopen
+
+        # stop dispatch, wait for messages
+        false
       end
 
       def process_message(data)
         debug [:message, data]
         @onmessage.call(data) if @onmessage
+
+        false
       end
 
       # should only be invoked after handshake, otherwise it
@@ -70,6 +77,7 @@ module EventMachine
       # byte to a value betweent 0x80 and 0xFF, followed by
       # a leading length indicator
       def send(data)
+        debug [:send, data]
         send_data("\x00#{data}\xff")
       end
 
