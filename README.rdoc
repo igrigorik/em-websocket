@@ -1,6 +1,7 @@
 = EM-WebSocket
 
 EventMachine based WebSocket server -- highly experimental, at this point, at least.
+- http://www.igvita.com/2009/12/22/ruby-websockets-tcp-for-the-browser/
 
 == Simple server example
 

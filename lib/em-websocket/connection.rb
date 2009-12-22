@@ -45,7 +45,7 @@ module EventMachine
       end
 
       def send_upgrade
-        upgrade = "HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
+        upgrade =  "HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
         upgrade << "Upgrade: WebSocket\r\n"
         upgrade << "Connection: Upgrade\r\n"
         upgrade << "WebSocket-Origin: file://\r\n"
