@@ -84,10 +84,11 @@ module EventMachine
       private
 
       def debug(*data)
-        return unless @debug
-        require 'pp'
-        pp data
-        puts
+        if @debug
+          require 'pp'
+          pp data
+          puts
+        end
       end
     end
   end

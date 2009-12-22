@@ -10,7 +10,7 @@ module EventMachine
 
         EventMachine::start_server(options[:host], options[:port],
           EventMachine::WebSocket::Connection, options) do |c|
-          c.instance_eval(&blk)
+          blk.call(c)
         end
       end
     end
