@@ -1,6 +1,11 @@
+require 'addressable/uri'
+require 'uri'
 module EventMachine
   module WebSocket
     class Connection < EventMachine::Connection
+
+      PATH   = /^GET (\/[^\s]*) HTTP\/1\.1$/
+      HEADER = /^([^:]+):\s*([^$]+)/
 
       # define WebSocket callbacks
       def onopen(&blk);     @onopen = blk;    end
@@ -11,14 +16,17 @@ module EventMachine
         @options = options
         @debug = options[:debug] || false
         @state = :handshake
+        @request = {}
+        @data = ''
 
         debug [:initialize]
       end
 
       def receive_data(data)
         debug [:receive_data, data]
-       
-        dispatch(data)
+
+        @data << data
+        dispatch
       end
 
       def unbind
@@ -26,33 +34,69 @@ module EventMachine
         @onclose.call if @onclose
       end
 
-      def dispatch(data = nil)
+      def dispatch
         while case @state
           when :handshake
-            new_request(data)
+            new_request
           when :upgrade
             send_upgrade
           when :connected
-            process_message(data)
+            process_message
           else raise RuntimeError, "invalid state: #{@state}"
           end
         end
       end
 
-      def new_request(data)
-        # TODO: verify WS headers
-        @state = :upgrade
+      def new_request
+        if @data.match(/\r\n\r\n$/)
+          debug [:inbound_headers, @data]
+          lines = @data.split("\r\n")
+
+          # extract request path
+          @request['Path'] = lines.shift.match(PATH)[1].strip
+
+          # extract remaining headers
+          lines.each do |line|
+            h = HEADER.match(line)
+            @request[h[1].strip] = h[2].strip
+          end
+
+          # transform headers
+          @request['Host'] = Addressable::URI.parse("ws://"+@request['Host'])
+          
+          if not websocket_connection?
+            send_data "HTTP/1.1 400 Bad request\r\n\r\n"
+            close_connection_after_writing
+            return false
+
+          else
+            @data = ''
+            @state = :upgrade
+            return true
+          end
+        end
+
+        false
+      end
+
+      def websocket_connection?
+        @request['Connection'] == 'Upgrade' and @request['Upgrade'] == 'WebSocket'
       end
 
       def send_upgrade
+        location  = "ws://#{@request['Host'].host}"
+        location << ":#{@request['Host'].port}" if @request['Host'].port
+        location << @request['Path']
+
         upgrade =  "HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
         upgrade << "Upgrade: WebSocket\r\n"
         upgrade << "Connection: Upgrade\r\n"
-        upgrade << "WebSocket-Origin: file://\r\n"
-        upgrade << "WebSocket-Location: ws://localhost:8080/\r\n\r\n"
+        upgrade << "WebSocket-Origin: #{@request['Origin']}\r\n"
+        upgrade << "WebSocket-Location: #{location}\r\n\r\n"
 
         # upgrade connection and notify client callback
         # about completed handshake
+        debug [:upgrade_headers, upgrade]
         send_data upgrade
 
         @state = :connected
@@ -62,9 +106,10 @@ module EventMachine
         false
       end
 
-      def process_message(data)
-        debug [:message, data]
-        @onmessage.call(data) if @onmessage
+      def process_message
+        debug [:message, @data]
+        @onmessage.call(@data) if @onmessage
+        @data = ''
 
         false
       end

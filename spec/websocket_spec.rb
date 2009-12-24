@@ -33,8 +33,6 @@ describe EventMachine::WebSocket do
   end
 
   it "should fail on non WebSocket requests" do
-    pending
-
     EM.run do
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('http://127.0.0.1:8080/').get :timeout => 0
@@ -45,7 +43,7 @@ describe EventMachine::WebSocket do
         }
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080, :debug => true) {}
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) {}
     end
   end
 
