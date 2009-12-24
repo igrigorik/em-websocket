@@ -7,6 +7,8 @@ module EventMachine
       PATH   = /^GET (\/[^\s]*) HTTP\/1\.1$/
       HEADER = /^([^:]+):\s*([^$]+)/
 
+      attr_reader :state
+
       # define WebSocket callbacks
       def onopen(&blk);     @onopen = blk;    end
       def onclose(&blk);    @onclose = blk;   end
@@ -31,6 +33,8 @@ module EventMachine
 
       def unbind
         debug [:unbind, :connection]
+        
+        @state = :closed
         @onclose.call if @onclose
       end
 

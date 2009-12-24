@@ -74,26 +74,26 @@ describe EventMachine::WebSocket do
     end
   end
 
-  #  it "should call onclose callback when client closes connection" do
-  #    EM.run do
-  #      EventMachine.add_timer(0.1) do
-  #        http = EventMachine::HttpRequest.new('ws://127.0.0.1:8080/').get :timeout => 0
-  #        http.errback { failed }
-  #        http.callback {
-  #          http.response_header.status.should == 101
-  #          http.close
-  #          p 'wtf'
-  #        }
-  #      end
-  #
-  #      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
-  #        ws.onopen {}
-  #        ws.onclose {
-  #          puts 'closing!'
-  #          EventMachine.stop
-  #        }
-  #      end
-  #    end
-  #  end
+  it "should call onclose callback when client closes connection" do
+    EM.run do
+      EventMachine.add_timer(0.1) do
+        http = EventMachine::HttpRequest.new('ws://127.0.0.1:8080/').get :timeout => 0
+        http.errback { failed }
+        http.callback {
+          http.response_header.status.should == 101
+          http.close_connection
+        }
+        http.stream{|msg|}
+      end
+
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
+        ws.onopen {}
+        ws.onclose {
+          ws.state.should == :closed
+          EventMachine.stop
+        }
+      end
+    end
+  end
 
 end
