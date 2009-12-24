@@ -23,7 +23,6 @@ describe EventMachine::WebSocket do
 
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
         ws.onopen {
-          puts "WebSocket connection open"
           ws.send MSG
         }
       end
@@ -44,9 +43,83 @@ describe EventMachine::WebSocket do
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) {}
     end
   end
-  
-  it "should split multiple messages into separate callbacks"
-  it "should call onclose callback -- needs terminate method on em-http"
-  it "should buffer incoming message data until the delimiter is hit"
-  
+
+  #  it "should split multiple messages into separate callbacks" do
+  #    EM.run do
+  #      messages = %w[1 2]
+  #      recieved = []
+  #
+  #      EventMachine.add_timer(0.1) do
+  #        http = EventMachine::HttpRequest.new('ws://127.0.0.1:8080/').get :timeout => 0
+  #        http.errback { failed }
+  #        http.callback { http.response_header.status.should == 101 }
+  #        http.stream {|msg|
+  #          p msg.inspect
+  #
+  #          msg.should == messages[recieved.size]
+  #          recieved.push msg
+  #
+  #          EventMachine.stop if recieved.size == messages.size
+  #        }
+  #      end
+  #
+  #      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080, :debug => true) do |ws|
+  #        ws.onopen {
+  #          puts "WebSocket connection open"
+  #          ws.send messages[0]
+  #          ws.send messages[1]
+  #        }
+  #      end
+  #    end
+  #  end
+
+  it "should split multiple messages into separate callbacks" do
+    EM.run do
+      messages = %w[1 2]
+      recieved = []
+
+      EventMachine.add_timer(0.1) do
+        http = EventMachine::HttpRequest.new('ws://127.0.0.1:8080/').get :timeout => 0
+        http.errback { failed }
+        http.callback {
+          http.response_header.status.should == 101
+          http.send messages[0]
+          http.send messages[1]
+        }
+      end
+
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
+        ws.onopen {}
+        ws.onmessage {|msg|
+          msg.should == messages[recieved.size]
+          recieved.push msg
+
+          EventMachine.stop if recieved.size == messages.size
+        }
+      end
+    end
+  end
+
+  #  it "should call onclose callback when client closes connection" do
+  #    EM.run do
+  #      EventMachine.add_timer(0.1) do
+  #        http = EventMachine::HttpRequest.new('ws://127.0.0.1:8080/').get :timeout => 0
+  #        http.errback { failed }
+  #        http.callback {
+  #          http.response_header.status.should == 101
+  #          http.close_connection(true)
+  #          p 'wtf'
+  #        }
+  #      end
+  #
+  #      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
+  #        ws.onopen {}
+  #        ws.onclose {
+  #          puts 'closing!'
+  #          EventMachine.stop
+  #        }
+  #      end
+  #    end
+  #  end
+
 end

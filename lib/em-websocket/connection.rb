@@ -107,10 +107,16 @@ module EventMachine
       end
 
       def process_message
+        return if not @onmessage
         debug [:message, @data]
-        @onmessage.call(@data) if @onmessage
-        @data = ''
-
+        
+        # slice the message out of the buffer and pass in
+        # for processing, and buffer data otherwise
+         while msg = @data.slice!(/\000([^\377]*)\377/)
+          msg.gsub!(/^\x00|\xff$/, '')
+          @onmessage.call(msg)
+        end
+       
         false
       end
 
