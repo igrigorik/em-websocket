@@ -9,7 +9,7 @@ module EventMachine
 
       # define WebSocket callbacks
       def onopen(&blk);     @onopen = blk;    end
-      def onclose(&blk);    @onclode = blk;   end
+      def onclose(&blk);    @onclose = blk;   end
       def onmessage(&blk);  @onmessage = blk; end
 
       def initialize(options)
