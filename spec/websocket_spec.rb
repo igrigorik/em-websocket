@@ -26,8 +26,6 @@ describe EventMachine::WebSocket do
           puts "WebSocket connection open"
           ws.send MSG
         }
-
-        # TODO: need .terminate method on EM-http to invoke & test .onclose callback
       end
     end
   end
@@ -46,5 +44,9 @@ describe EventMachine::WebSocket do
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) {}
     end
   end
-
+  
+  it "should split multiple messages into separate callbacks"
+  it "should call onclose callback -- needs terminate method on em-http"
+  it "should buffer incoming message data until the delimiter is hit"
+  
 end
