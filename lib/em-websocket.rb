@@ -1,6 +1,6 @@
 $:.unshift(File.dirname(__FILE__) + '/../lib')
 
-require "rubygems"
+#require "rubygems"
 require "eventmachine"
 
 %w[ websocket connection ].each do |file|
