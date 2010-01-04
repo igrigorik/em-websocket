@@ -48,7 +48,7 @@ describe EventMachine::WebSocket do
   it "should split multiple messages into separate callbacks" do
     EM.run do
       messages = %w[1 2]
-      recieved = []
+      received = []
 
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('ws://127.0.0.1:8080/').get :timeout => 0
@@ -65,10 +65,10 @@ describe EventMachine::WebSocket do
         ws.onopen {}
         ws.onclose {}
         ws.onmessage {|msg|
-          msg.should == messages[recieved.size]
-          recieved.push msg
+          msg.should == messages[received.size]
+          received.push msg
 
-          EventMachine.stop if recieved.size == messages.size
+          EventMachine.stop if received.size == messages.size
         }
       end
     end
