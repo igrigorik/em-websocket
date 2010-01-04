@@ -11,7 +11,8 @@ begin
     gemspec.homepage = "http://github.com/igrigorik/em-websocket"
     gemspec.authors = ["Ilya Grigorik"]
     gemspec.add_dependency("eventmachine", ">= 0.12.9")
-    gemspec.add_dependency("addressable")
+    gemspec.add_dependency("addressable", '>= 2.1.1')
+    gemspec.add_development_dependency('em-http-request', '>= 0.2.6')
     gemspec.rubyforge_project = "em-websocket"
   end
 
