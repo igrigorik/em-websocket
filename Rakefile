@@ -20,6 +20,8 @@ rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install jeweler -s http://gemcutter.org"
 end
 
+task :default => :spec
+
 Spec::Rake::SpecTask.new do |t|
   t.ruby_opts = ['-rtest/unit']
   t.spec_files = FileList['spec/**/*_spec.rb']
