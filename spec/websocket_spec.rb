@@ -96,4 +96,33 @@ describe EventMachine::WebSocket do
     end
   end
 
+  it "should populate ws.request with appropriate headers" do
+    EM.run do
+      EventMachine.add_timer(0.1) do
+        http = EventMachine::HttpRequest.new('ws://127.0.0.1:8080/').get :timeout => 0
+        http.errback { failed }
+        http.callback {
+          http.response_header.status.should == 101
+          http.close_connection
+        }
+        http.stream { |msg| }
+      end
+
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
+        ws.onopen {
+          ws.request["User-Agent"].should == "EventMachine HttpClient"
+          ws.request["Connection"].should == "Upgrade"
+          ws.request["Upgrade"].should == "WebSocket"
+          ws.request["Path"].should == "/"
+          ws.request["Origin"].should == "127.0.0.1"
+          ws.request["Host"].to_s.should == "ws://127.0.0.1:8080"
+        }
+        ws.onclose {
+          ws.state.should == :closed
+          EventMachine.stop
+        }
+      end
+    end
+  end
+
 end

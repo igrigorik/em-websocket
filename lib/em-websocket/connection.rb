@@ -7,7 +7,7 @@ module EventMachine
       PATH   = /^GET (\/[^\s]*) HTTP\/1\.1$/
       HEADER = /^([^:]+):\s*([^$]+)/
 
-      attr_reader :state
+      attr_reader :state, :request
 
       # define WebSocket callbacks
       def onopen(&blk);     @onopen = blk;    end
