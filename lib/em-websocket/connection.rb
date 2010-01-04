@@ -33,7 +33,7 @@ module EventMachine
 
       def unbind
         debug [:unbind, :connection]
-        
+
         @state = :closed
         @onclose.call if @onclose
       end
@@ -59,6 +59,9 @@ module EventMachine
           # extract request path
           @request['Path'] = lines.shift.match(PATH)[1].strip
 
+          # extract query string values
+          @request['Query'] = Addressable::URI.parse(@request['Path']).query_values ||= {}
+
           # extract remaining headers
           lines.each do |line|
             h = HEADER.match(line)
@@ -67,7 +70,7 @@ module EventMachine
 
           # transform headers
           @request['Host'] = Addressable::URI.parse("ws://"+@request['Host'])
-          
+
           if not websocket_connection?
             send_data "HTTP/1.1 400 Bad request\r\n\r\n"
             close_connection_after_writing
@@ -120,7 +123,7 @@ module EventMachine
           msg.gsub!(/^\x00|\xff$/, '')
           @onmessage.call(msg)
         end
-       
+
         false
       end
 
