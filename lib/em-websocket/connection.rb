@@ -93,7 +93,7 @@ module EventMachine
       def send_upgrade
         location  = "ws://#{@request['Host'].host}"
         location << ":#{@request['Host'].port}" if @request['Host'].port
-        location << @request['Path']
+        location << @request['Path'].split("?").first
 
         upgrade =  "HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
         upgrade << "Upgrade: WebSocket\r\n"
