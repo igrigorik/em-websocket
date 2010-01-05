@@ -11,7 +11,7 @@ describe EventMachine::WebSocket do
     EM.run do
       MSG = "Hello World!"
       EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('ws://127.0.0.1:8080/').get :timeout => 0
+        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
         http.errback { failed }
         http.callback { http.response_header.status.should == 101 }
 
@@ -21,7 +21,7 @@ describe EventMachine::WebSocket do
         }
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen {
           puts "WebSocket connection open"
           ws.send MSG
@@ -33,7 +33,7 @@ describe EventMachine::WebSocket do
   it "should fail on non WebSocket requests" do
     EM.run do
       EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('http://127.0.0.1:8080/').get :timeout => 0
+        http = EventMachine::HttpRequest.new('http://127.0.0.1:12345/').get :timeout => 0
         http.errback { failed }
         http.callback {
           http.response_header.status.should == 400
@@ -41,7 +41,7 @@ describe EventMachine::WebSocket do
         }
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) {}
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) {}
     end
   end
 
@@ -51,7 +51,7 @@ describe EventMachine::WebSocket do
       received = []
 
       EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('ws://127.0.0.1:8080/').get :timeout => 0
+        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
         http.errback { failed }
         http.stream {|msg|}
         http.callback {
@@ -61,7 +61,7 @@ describe EventMachine::WebSocket do
         }
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen {}
         ws.onclose {}
         ws.onmessage {|msg|
@@ -77,7 +77,7 @@ describe EventMachine::WebSocket do
   it "should call onclose callback when client closes connection" do
     EM.run do
       EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('ws://127.0.0.1:8080/').get :timeout => 0
+        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
         http.errback { failed }
         http.callback {
           http.response_header.status.should == 101
@@ -86,7 +86,7 @@ describe EventMachine::WebSocket do
         http.stream{|msg|}
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen {}
         ws.onclose {
           ws.state.should == :closed
@@ -99,7 +99,7 @@ describe EventMachine::WebSocket do
   it "should populate ws.request with appropriate headers" do
     EM.run do
       EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('ws://127.0.0.1:8080/').get :timeout => 0
+        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
         http.errback { failed }
         http.callback {
           http.response_header.status.should == 101
@@ -108,14 +108,14 @@ describe EventMachine::WebSocket do
         http.stream { |msg| }
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen {
           ws.request["User-Agent"].should == "EventMachine HttpClient"
           ws.request["Connection"].should == "Upgrade"
           ws.request["Upgrade"].should == "WebSocket"
           ws.request["Path"].should == "/"
           ws.request["Origin"].should == "127.0.0.1"
-          ws.request["Host"].to_s.should == "ws://127.0.0.1:8080"
+          ws.request["Host"].to_s.should == "ws://127.0.0.1:12345"
         }
         ws.onclose {
           ws.state.should == :closed
@@ -128,7 +128,7 @@ describe EventMachine::WebSocket do
   it "should allow sending and retrieving query string args passed in on the connection request." do
     EM.run do
       EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('ws://127.0.0.1:8080/').get(:query => {'foo' => 'bar', 'baz' => 'qux'}, :timeout => 0)
+        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get(:query => {'foo' => 'bar', 'baz' => 'qux'}, :timeout => 0)
         http.errback { failed }
         http.callback {
           http.response_header.status.should == 101
@@ -137,7 +137,7 @@ describe EventMachine::WebSocket do
         http.stream { |msg| }
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen {
           ws.request["Path"].should == "/?baz=qux&foo=bar"
           ws.request["Query"]["foo"].should == "bar"
@@ -154,7 +154,7 @@ describe EventMachine::WebSocket do
   it "should ws.response['Query'] to empty hash when no query string params passed in connection URI" do
     EM.run do
       EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('ws://127.0.0.1:8080/').get(:timeout => 0)
+        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get(:timeout => 0)
         http.errback { failed }
         http.callback {
           http.response_header.status.should == 101
@@ -163,7 +163,7 @@ describe EventMachine::WebSocket do
         http.stream { |msg| }
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen {
           ws.request["Path"].should == "/"
           ws.request["Query"].should == {}
