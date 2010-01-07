@@ -56,34 +56,43 @@ module EventMachine
           debug [:inbound_headers, @data]
           lines = @data.split("\r\n")
 
-          # extract request path
-          @request['Path'] = lines.shift.match(PATH)[1].strip
-
-          # extract query string values
-          @request['Query'] = Addressable::URI.parse(@request['Path']).query_values ||= {}
-
-          # extract remaining headers
-          lines.each do |line|
-            h = HEADER.match(line)
-            @request[h[1].strip] = h[2].strip
-          end
-
-          # transform headers
-          @request['Host'] = Addressable::URI.parse("ws://"+@request['Host'])
-
-          if not websocket_connection?
-            send_data "HTTP/1.1 400 Bad request\r\n\r\n"
-            close_connection_after_writing
+          begin
+            # extract request path
+            @request['Path'] = lines.shift.match(PATH)[1].strip
+  
+            # extract query string values
+            @request['Query'] = Addressable::URI.parse(@request['Path']).query_values ||= {}
+  
+            # extract remaining headers
+            lines.each do |line|
+              h = HEADER.match(line)
+              @request[h[1].strip] = h[2].strip
+            end
+  
+            # transform headers
+            @request['Host'] = Addressable::URI.parse("ws://"+@request['Host'])
+  
+            if not websocket_connection?
+              process_bad_request
+              return false
+            else
+              @data = ''
+              @state = :upgrade
+              return true
+            end
+          rescue => e
+            debug [:error, e]
+            process_bad_request
             return false
-
-          else
-            @data = ''
-            @state = :upgrade
-            return true
           end
         end
 
         false
+      end
+      
+      def process_bad_request
+        send_data "HTTP/1.1 400 Bad request\r\n\r\n"
+        close_connection_after_writing
       end
 
       def websocket_connection?
