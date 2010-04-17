@@ -20,6 +20,7 @@ module EventMachine
         @state = :handshake
         @request = {}
         @data = ''
+        @skip_onclose = false
 
         debug [:initialize]
       end
@@ -35,7 +36,7 @@ module EventMachine
         debug [:unbind, :connection]
 
         @state = :closed
-        @onclose.call if @onclose
+        @onclose.call if @onclose && !@skip_onclose
       end
 
       def dispatch
@@ -85,6 +86,9 @@ module EventMachine
             process_bad_request
             return false
           end
+        elsif @data.match(/<policy-file-request\s*\/>/)
+          send_flash_cross_domain_file
+          return false
         end
 
         false
@@ -120,6 +124,14 @@ module EventMachine
 
         # stop dispatch, wait for messages
         false
+      end
+      
+      def send_flash_cross_domain_file
+        file =  '<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="*" to-ports="*"/></cross-domain-policy>'
+        debug [:cross_domain, file]
+        send_data file
+        @skip_onclose = true
+        close_connection_after_writing
       end
 
       def process_message
