@@ -36,7 +36,7 @@ module EventMachine
         debug [:unbind, :connection]
 
         @state = :closed
-        @onclose.call if @onclose && !@skip_onclose
+        @onclose.call if @onclose
       end
 
       def dispatch
@@ -60,19 +60,19 @@ module EventMachine
           begin
             # extract request path
             @request['Path'] = lines.shift.match(PATH)[1].strip
-  
+
             # extract query string values
             @request['Query'] = Addressable::URI.parse(@request['Path']).query_values ||= {}
-  
+
             # extract remaining headers
             lines.each do |line|
               h = HEADER.match(line)
               @request[h[1].strip] = h[2].strip
             end
-  
+
             # transform headers
             @request['Host'] = Addressable::URI.parse("ws://"+@request['Host'])
-  
+
             if not websocket_connection?
               process_bad_request
               return false
@@ -93,7 +93,7 @@ module EventMachine
 
         false
       end
-      
+
       def process_bad_request
         send_data "HTTP/1.1 400 Bad request\r\n\r\n"
         close_connection_after_writing
@@ -125,12 +125,15 @@ module EventMachine
         # stop dispatch, wait for messages
         false
       end
-      
+
       def send_flash_cross_domain_file
         file =  '<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="*" to-ports="*"/></cross-domain-policy>'
         debug [:cross_domain, file]
         send_data file
-        @skip_onclose = true
+
+        # handle the cross-domain request transparently
+        # no need to notif the user about this connection
+        @onclose = nil
         close_connection_after_writing
       end
 
