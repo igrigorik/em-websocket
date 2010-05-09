@@ -25,17 +25,19 @@ EventMachine.run {
 
 
   EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080, :debug => true) do |ws|
+
     ws.onopen {
-      @sid = @channel.subscribe { |msg| ws.send msg }
-      @channel.push "#{@sid} connected!"
-    }
+      sid = @channel.subscribe { |msg| ws.send msg }
+      @channel.push "#{sid} connected!"
 
-    ws.onmessage { |msg|
-      @channel.push "<#{@sid}>: #{msg}"
-    }
+      ws.onmessage { |msg|
+        @channel.push "<#{sid}>: #{msg}"
+      }
 
-    ws.onclose {
-      @channel.unsubscribe(@sid)
+      ws.onclose {
+        @channel.unsubscribe(sid)
+      }
+
     }
   end
 
