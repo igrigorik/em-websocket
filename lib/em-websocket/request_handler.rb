@@ -15,7 +15,6 @@ module EventMachine
     
       def parse(lines)
         # extract request path
-        # @request['Path'] = aa.match(PATH)[0].strip
 
         @request['Path'] = lines.shift.match(PATH)[1].strip
         # @request['Path'] = "/"
