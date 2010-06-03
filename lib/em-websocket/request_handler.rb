@@ -1,5 +1,6 @@
 module EventMachine
   module WebSocket
+    
     class RequestHandler
       PATH   = /^GET (\/[^\s]*) HTTP\/1\.1$/
       HEADER = /^([^:]+):\s*([^$]+)/
@@ -33,7 +34,18 @@ module EventMachine
     
         # transform headers
         @request['Host'] = Addressable::URI.parse("ws://"+@request['Host'])
-
+        
+        @version = get_version(@request)
+        send("set_response_header_#{@version}")
+        
+        return true
+      end
+      
+      def set_response_header_76
+        
+      end
+      
+      def set_response_header_75
         raise unless @request['Connection'] == 'Upgrade' and @request['Upgrade'] == 'WebSocket'
         location  = "ws://#{@request['Host'].host}"
         location << ":#{@request['Host'].port}" if @request['Host'].port
@@ -48,10 +60,13 @@ module EventMachine
         # upgrade connection and notify client callback
         # about completed handshake
         debug [:upgrade_headers, upgrade]
-        @response = upgrade
-        return true
+        @response = upgrade        
       end
     private
+      def get_version(request)
+        request['Sec-WebSocket-Key1'] ? 76 : 75
+      end
+    
       def debug(*data)
         if @debug
           require 'pp'
