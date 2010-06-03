@@ -4,9 +4,6 @@ module EventMachine
   module WebSocket
     class Connection < EventMachine::Connection
 
-      PATH   = /^GET (\/[^\s]*) HTTP\/1\.1$/
-      HEADER = /^([^:]+):\s*([^$]+)/
-
       attr_reader :state, :request
 
       # define WebSocket callbacks
@@ -54,32 +51,15 @@ module EventMachine
         if @data.match(/\r\n\r\n$/)
           debug [:inbound_headers, @data]
           lines = @data.split("\r\n")
-
           begin
-            # extract request path
-            @request['Path'] = lines.shift.match(PATH)[1].strip
+            handler = RequestHandler.new
+            handler.parse(lines)
+            send_data handler.response
 
-            # extract query string values
-            @request['Query'] = Addressable::URI.parse(@request['Path']).query_values ||= {}
-
-            # extract remaining headers
-            lines.each do |line|
-              h = HEADER.match(line)
-              @request[h[1].strip] = h[2].strip
-            end
-
-            # transform headers
-            @request['Host'] = Addressable::URI.parse("ws://"+@request['Host'])
-
-            if not websocket_connection?
-              process_bad_request
-              return false
-            else
-              @data = ''
-              @state = :upgrade
-              send_upgrade
-              return true
-            end
+            @request = handler.request
+            @state = :connected
+            @onopen.call if @onopen
+            return true
           rescue => e
             debug [:error, e]
             process_bad_request
@@ -100,29 +80,6 @@ module EventMachine
 
       def websocket_connection?
         @request['Connection'] == 'Upgrade' and @request['Upgrade'] == 'WebSocket'
-      end
-
-      def send_upgrade
-        location  = "ws://#{@request['Host'].host}"
-        location << ":#{@request['Host'].port}" if @request['Host'].port
-        location << @request['Path']
-
-        upgrade =  "HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
-        upgrade << "Upgrade: WebSocket\r\n"
-        upgrade << "Connection: Upgrade\r\n"
-        upgrade << "WebSocket-Origin: #{@request['Origin']}\r\n"
-        upgrade << "WebSocket-Location: #{location}\r\n\r\n"
-
-        # upgrade connection and notify client callback
-        # about completed handshake
-        debug [:upgrade_headers, upgrade]
-        send_data upgrade
-
-        @state = :connected
-        @onopen.call if @onopen
-
-        # stop dispatch, wait for messages
-        false
       end
 
       def send_flash_cross_domain_file
