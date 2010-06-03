@@ -42,9 +42,7 @@ module EventMachine
       def dispatch
         while case @state
           when :handshake
-            new_request
-          when :upgrade
-            send_upgrade
+            handshake
           when :connected
             process_message
           else raise RuntimeError, "invalid state: #{@state}"
@@ -52,7 +50,7 @@ module EventMachine
         end
       end
 
-      def new_request
+      def handshake
         if @data.match(/\r\n\r\n$/)
           debug [:inbound_headers, @data]
           lines = @data.split("\r\n")
@@ -79,6 +77,7 @@ module EventMachine
             else
               @data = ''
               @state = :upgrade
+              send_upgrade
               return true
             end
           rescue => e
