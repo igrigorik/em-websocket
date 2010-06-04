@@ -5,7 +5,7 @@ module EventMachine
     class HandshakeError < RuntimeError; end
     
     class RequestHandler
-      PATH   = /^GET (\/[^\s]*) HTTP\/1\.1$/
+      PATH   = /^(\w+) (\/[^\s]*) HTTP\/1\.1$/
       HEADER = /^([^:]+):\s*([^$]+)/
   
       attr_reader :request, :response, :version
@@ -21,7 +21,13 @@ module EventMachine
         lines = data.split("\r\n")
 
         # extract request path
-        @request['Path'] = lines.shift.match(PATH)[1].strip
+        first_line = lines.shift.match(PATH)
+        @request['Method'] = first_line[1].strip
+        @request['Path'] = first_line[2].strip
+
+        unless @request["Method"] == "GET"
+          raise HandshakeError, "Must be GET request"
+        end
     
         # extract query string values
         @request['Query'] = Addressable::URI.parse(@request['Path']).query_values ||= {}
@@ -31,6 +37,10 @@ module EventMachine
           @request[h[1].strip] = h[2].strip if h
         end
 
+        unless @request['Connection'] == 'Upgrade' and @request['Upgrade'] == 'WebSocket'
+          raise HandshakeError, "Connection and Upgrade headers required"
+        end
+
         # This is only used for draft 76
         @request['Third-Key'] = lines.last
 
@@ -38,7 +48,7 @@ module EventMachine
         @request['Host'] = Addressable::URI.parse("ws://"+@request['Host'])
         
         @version = get_version(@request)
-        raise HandshakeError unless @request['Connection'] == 'Upgrade' and @request['Upgrade'] == 'WebSocket'
+
         @response = send("set_response_header_#{@version}")
         # upgrade connection and notify client callback
         # about completed handshake
@@ -62,7 +72,10 @@ module EventMachine
         upgrade << "Connection: Upgrade\r\n"
         upgrade << "Sec-WebSocket-Location: #{location}\r\n"
         upgrade << "Sec-WebSocket-Origin: #{@request['Origin']}\r\n"
-        upgrade << "Sec-WebSocket-Protocol: #{@request['Sec-WebSocket-Protocol']}\r\n"  if @request['Sec-WebSocket-Protocol']
+        if protocol = @request['Sec-WebSocket-Protocol']
+          validate_protocol!(protocol)
+          upgrade << "Sec-WebSocket-Protocol: #{protocol}\r\n"
+        end
         upgrade << "\r\n"
         upgrade << challenge_response
       end
@@ -99,6 +112,11 @@ module EventMachine
     
       def get_version(request)
         request['Sec-WebSocket-Key1'] ? 76 : 75
+      end
+
+      def validate_protocol!(protocol)
+        raise HandshakeError, "Invalid WebSocket-Protocol: empty" if protocol.empty?
+        # TODO: Validate characters
       end
     
       def debug(*data)

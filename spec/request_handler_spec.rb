@@ -256,4 +256,28 @@ describe "EventMachine::WebSocket::RequestHandler" do
       handler(@request).response
     }.should raise_error(EM::WebSocket::HandshakeError)
   end
+
+  it "should raise error on wrong method" do
+    @request[:method] = 'POST'
+
+    lambda {
+      handler(@request).response
+    }.should raise_error(EM::WebSocket::HandshakeError)
+  end
+
+  it "should raise error if upgrade header incorrect" do
+    @request[:headers]['Upgrade'] = 'NonWebSocket'
+
+    lambda {
+      handler(@request).response
+    }.should raise_error(EM::WebSocket::HandshakeError)
+  end
+
+  it "should raise error if Sec-WebSocket-Protocol is empty" do
+    @request[:headers]['Sec-WebSocket-Protocol'] = ''
+
+    lambda {
+      handler(@request).response
+    }.should raise_error(EM::WebSocket::HandshakeError)
+  end
 end
