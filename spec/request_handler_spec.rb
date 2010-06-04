@@ -164,11 +164,16 @@ describe "EventMachine::WebSocket::RequestHandler" do
     data
   end
 
-  def assert_valid_handshake(request, response)
+  def handler(request)
     handler = EventMachine::WebSocket::RequestHandler.new
     handler.parse(format_request(request))
-
-    handler.response.sort.should == format_response(response).sort
+    handler
+  end
+  
+  def send_handshake(response)
+    simple_matcher do |given|
+      given.response.sort == format_response(response).sort
+    end
   end
 
   before :each do
@@ -201,7 +206,7 @@ describe "EventMachine::WebSocket::RequestHandler" do
   end
 
   it "should handle good request" do
-    assert_valid_handshake(@request, @response)
+    handler(@request).should send_handshake(@response)
   end
 
   it "should handle good request to secure default port" do
@@ -214,7 +219,7 @@ describe "EventMachine::WebSocket::RequestHandler" do
     @response[:headers]['Sec-WebSocket-Location'] =
       'ws://example.com:8081/demo'
 
-    assert_valid_handshake(@request, @response)
+    handler(@request).should send_handshake(@response)
   end
 
   it "should handle good request to secure nondefault port" do
@@ -225,13 +230,30 @@ describe "EventMachine::WebSocket::RequestHandler" do
     @request[:headers].delete('Sec-WebSocket-Protocol')
     @response[:headers].delete("Sec-WebSocket-Protocol")
 
-    assert_valid_handshake(@request, @response)
+    handler(@request).should send_handshake(@response)
   end
 
   it "should handle extra headers by simply ignoring them" do
     @request[:headers]['EmptyValue'] = ""
     @request[:headers]['AKey'] = "AValue"
 
-    assert_valid_handshake(@request, @response)
+    handler(@request).should send_handshake(@response)
+  end
+  
+  it "should raise error on HTTP request" do
+    @request[:headers] = {
+      'Host' => 'www.google.com',
+      'User-Agent' => 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.5; en-US; rv:1.9.1.3) Gecko/20090824 Firefox/3.5.3 GTB6 GTBA',
+      'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language' => 'en-us,en;q=0.5',
+      'Accept-Encoding' => 'gzip,deflate',
+      'Accept-Charset' => 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
+      'Keep-Alive' => '300',
+      'Connection' => 'keep-alive',
+    }
+    
+    lambda {
+      handler(@request).response
+    }.should raise_error(EM::WebSocket::HandshakeError)
   end
 end

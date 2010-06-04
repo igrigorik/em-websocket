@@ -2,6 +2,7 @@ require 'digest/md5'
 
 module EventMachine
   module WebSocket
+    class HandshakeError < RuntimeError; end
     
     class RequestHandler
       PATH   = /^GET (\/[^\s]*) HTTP\/1\.1$/
@@ -37,7 +38,7 @@ module EventMachine
         @request['Host'] = Addressable::URI.parse("ws://"+@request['Host'])
         
         @version = get_version(@request)
-        raise unless @request['Connection'] == 'Upgrade' and @request['Upgrade'] == 'WebSocket'
+        raise HandshakeError unless @request['Connection'] == 'Upgrade' and @request['Upgrade'] == 'WebSocket'
         @response = send("set_response_header_#{@version}")
         # upgrade connection and notify client callback
         # about completed handshake
