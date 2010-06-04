@@ -1,3 +1,5 @@
+require 'digest/md5'
+
 module EventMachine
   module WebSocket
     
@@ -19,33 +21,56 @@ module EventMachine
         @request['Path'] = lines.shift.match(PATH)[1].strip
         # @request['Path'] = "/"
     
-        p lines
-
         # extract query string values
         @request['Query'] = Addressable::URI.parse(@request['Path']).query_values ||= {}
     
         # extract remaining headers
-    
         lines.each do |line|
           h = HEADER.match(line)
-          @request[h[1].strip] = h[2].strip
+          @request[h[1].strip] = h[2].strip if h
         end
-    
+
+        # This is only used for draft 76
+        @request['Third-Key'] = lines.last
+
         # transform headers
         @request['Host'] = Addressable::URI.parse("ws://"+@request['Host'])
         
         @version = get_version(@request)
+        raise unless @request['Connection'] == 'Upgrade' and @request['Upgrade'] == 'WebSocket'
+        
         send("set_response_header_#{@version}")
         
         return true
       end
       
       def set_response_header_76
+        challenge_response = solve_challange(
+          @request['Sec-WebSocket-Key1'], 
+          @request['Sec-WebSocket-Key2'], 
+          @request['Third-Key']
+        )
         
+        location  = "ws://#{@request['Host'].host}"
+        location << ":#{@request['Host'].port}" if @request['Host'].port
+        location << @request['Path']
+
+        upgrade =  'HTTP/1.1 101 WebSocket Protocol Handshake\r\n'
+        upgrade << 'Upgrade: WebSocket\r\n'
+        upgrade << 'Connection: Upgrade\r\n'
+        upgrade << 'Sec-WebSocket-Location: '+ location + '\r\n'
+        upgrade << 'Sec-WebSocket-Origin: ' + @request['Origin'] + '\r\n'
+        upgrade << 'Sec-WebSocket-Protocol: ' + @request['Sec-WebSocket-Protocol']  + '\r\n'
+        upgrade << '\r\n'
+        upgrade << challenge_response
+
+        # upgrade connection and notify client callback
+        # about completed handshake
+        debug [:upgrade_headers, upgrade]
+        @response = upgrade        
       end
       
       def set_response_header_75
-        raise unless @request['Connection'] == 'Upgrade' and @request['Upgrade'] == 'WebSocket'
         location  = "ws://#{@request['Host'].host}"
         location << ":#{@request['Host'].port}" if @request['Host'].port
         location << @request['Path']
@@ -62,6 +87,22 @@ module EventMachine
         @response = upgrade        
       end
     private
+      def solve_challange(first, second, third)
+        # Refer to 5.2 4-9 of the draft 76
+        sum = (extract_nums(first) / count_spaces(first)).to_a.pack("N*") +
+              (extract_nums(second) / count_spaces(second)).to_a.pack("N*") +
+              third
+        Digest::MD5.digest(sum)
+      end
+      
+      def extract_nums(string)
+        string.scan(/[0-9]/).join.to_i
+      end
+      
+      def count_spaces(string)
+        string.scan(/ /).size        
+      end
+    
       def get_version(request)
         request['Sec-WebSocket-Key1'] ? 76 : 75
       end
