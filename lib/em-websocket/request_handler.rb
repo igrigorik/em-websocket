@@ -39,7 +39,11 @@ module EventMachine
         @version = get_version(@request)
         raise unless @request['Connection'] == 'Upgrade' and @request['Upgrade'] == 'WebSocket'
         
-        send("set_response_header_#{@version}")
+        @response = send("set_response_header_#{@version}")
+
+        # upgrade connection and notify client callback
+        # about completed handshake
+        debug [:upgrade_headers, @response]
         
         return true
       end
@@ -63,11 +67,6 @@ module EventMachine
         upgrade << 'Sec-WebSocket-Protocol: ' + @request['Sec-WebSocket-Protocol']  + '\r\n'
         upgrade << '\r\n'
         upgrade << challenge_response
-
-        # upgrade connection and notify client callback
-        # about completed handshake
-        debug [:upgrade_headers, upgrade]
-        @response = upgrade        
       end
       
       def set_response_header_75
@@ -80,11 +79,6 @@ module EventMachine
         upgrade << "Connection: Upgrade\r\n"
         upgrade << "WebSocket-Origin: #{@request['Origin']}\r\n"
         upgrade << "WebSocket-Location: #{location}\r\n\r\n"
-
-        # upgrade connection and notify client callback
-        # about completed handshake
-        debug [:upgrade_headers, upgrade]
-        @response = upgrade        
       end
     private
       def solve_challange(first, second, third)
