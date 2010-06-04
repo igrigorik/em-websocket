@@ -3,8 +3,6 @@ require 'addressable/uri'
 module EventMachine
   module WebSocket
     class Connection < EventMachine::Connection
-      # "\377\000" is octet version and "\xff\x00" is hex version 
-      TERMINATE_STRING = "\xff\x00".map {|c| c}.to_s
       attr_reader :state, :request
 
       # define WebSocket callbacks
@@ -26,18 +24,8 @@ module EventMachine
       def receive_data(data)
         debug [:receive_data, data]
         
-        # This logic is used for draft 76 only
-        # 
-        # 5.3 the server may decide to terminate the WebSocket connection by
-        # running through the following steps:
-        # 1. send a 0xFF byte and a 0x00 byte to the client to indicate the start
-        # of the closing handshake.
-        #
-        # NOTE
-        # pywebsocket have not implemented all close logic, so this may change soon
-        #
-        if data == TERMINATE_STRING
-          send_data(TERMINATE_STRING) 
+        if @handler && @handler.should_close?(data)
+          send_data(data) 
           unbind
         else
           @data << data
@@ -53,26 +41,26 @@ module EventMachine
       end
 
       def dispatch
-        while case @state
+        case @state
           when :handshake
             handshake
           when :connected
             process_message
           else raise RuntimeError, "invalid state: #{@state}"
-          end
         end
       end
 
       def handshake
-        # todo: Change to match with 8 unicoded bytes for draft 76
-        if @data.match(/\r\n\r\n$/) || @data.match(/\r\n\r\n.+$/m)
+        if @data.match(/<policy-file-request\s*\/>/)
+          send_flash_cross_domain_file
+          return false
+        else
           debug [:inbound_headers, @data]
           begin
-            handler = RequestHandler.new(@debug)
-            handler.parse(@data)
-            send_data handler.response
+            @handler = HandlerFactory.build(@data, @debug)
+            send_data @handler.handshake
 
-            @request = handler.request
+            @request = @handler.request
             @state = :connected
             @onopen.call if @onopen
             return true
@@ -81,11 +69,7 @@ module EventMachine
             process_bad_request
             return false
           end
-        elsif @data.match(/<policy-file-request\s*\/>/)
-          send_flash_cross_domain_file
-          return false
         end
-        false
       end
 
       def process_bad_request

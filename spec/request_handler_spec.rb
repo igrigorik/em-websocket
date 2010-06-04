@@ -149,7 +149,7 @@ BAD_REQUESTS = [
     ],
 ]
 
-describe "EventMachine::WebSocket::RequestHandler" do
+describe "EventMachine::WebSocket::Handler" do
   def format_request(r)
     data = "#{r[:method]} #{r[:path]} HTTP/1.1\r\n"
     header_lines = r[:headers].map { |k,v| "#{k}: #{v}" }
@@ -165,14 +165,12 @@ describe "EventMachine::WebSocket::RequestHandler" do
   end
 
   def handler(request)
-    handler = EventMachine::WebSocket::RequestHandler.new
-    handler.parse(format_request(request))
-    handler
+    EM::WebSocket::HandlerFactory.build(format_request(request))
   end
   
   def send_handshake(response)
     simple_matcher do |given|
-      given.response.sort == format_response(response).sort
+      given.handshake.sort == format_response(response).sort
     end
   end
 
@@ -253,7 +251,7 @@ describe "EventMachine::WebSocket::RequestHandler" do
     }
     
     lambda {
-      handler(@request).response
+      handler(@request).handshake
     }.should raise_error(EM::WebSocket::HandshakeError)
   end
 
@@ -261,7 +259,7 @@ describe "EventMachine::WebSocket::RequestHandler" do
     @request[:method] = 'POST'
 
     lambda {
-      handler(@request).response
+      handler(@request).handshake
     }.should raise_error(EM::WebSocket::HandshakeError)
   end
 
@@ -269,7 +267,7 @@ describe "EventMachine::WebSocket::RequestHandler" do
     @request[:headers]['Upgrade'] = 'NonWebSocket'
 
     lambda {
-      handler(@request).response
+      handler(@request).handshake
     }.should raise_error(EM::WebSocket::HandshakeError)
   end
 
@@ -277,7 +275,7 @@ describe "EventMachine::WebSocket::RequestHandler" do
     @request[:headers]['Sec-WebSocket-Protocol'] = ''
 
     lambda {
-      handler(@request).response
+      handler(@request).handshake
     }.should raise_error(EM::WebSocket::HandshakeError)
   end
 end
