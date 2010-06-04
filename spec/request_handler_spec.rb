@@ -2,8 +2,6 @@ require 'spec/helper'
 
 #  Sample request/response are from pywebsocket spec http://code.google.com/p/pywebsocket/
 
-
-
 GOOD_RESPONSE_SECURE = [
     'HTTP/1.1 101 WebSocket Protocol Handshake\r\n',
     'Upgrade: WebSocket\r\n',
@@ -220,27 +218,28 @@ BAD_REQUESTS = [
 describe "RequestHandlerSpec" do
   it "should handle good request" do
     GOOD_REQUEST = [
-            'GET /demo HTTP/1.1',
-            'Host: example.com',
-            'Connection: Upgrade',
-            'Sec-WebSocket-Key2: 12998 5 Y3 1  .P00',
-            'Sec-WebSocket-Protocol: sample',
-            'Upgrade: WebSocket',
-            'Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5',
-            'Origin: http://example.com',
-            '\r\n',
-            '^n:ds[4U',
+      'GET /demo HTTP/1.1',
+      'Host: example.com',
+      'Connection: Upgrade',
+      'Sec-WebSocket-Key2: 12998 5 Y3 1  .P00',
+      'Sec-WebSocket-Protocol: sample',
+      'Upgrade: WebSocket',
+      'Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5',
+      'Origin: http://example.com',
+      '\r\n',
+      '^n:ds[4U',
     ]
 
     GOOD_RESPONSE_DEFAULT_PORT = [
-        'HTTP/1.1 101 WebSocket Protocol Handshake\r\n',
-        'Upgrade: WebSocket\r\n',
-        'Connection: Upgrade\r\n',
-        'Sec-WebSocket-Location: ws://example.com/demo\r\n',
-        'Sec-WebSocket-Origin: http://example.com\r\n',
-        'Sec-WebSocket-Protocol: sample\r\n',
-        '\r\n',
-        '8jKS\'y:G*Co,Wxa-']
+      "HTTP/1.1 101 WebSocket Protocol Handshake\r\n",
+      "Upgrade: WebSocket\r\n",
+      "Connection: Upgrade\r\n",
+      "Sec-WebSocket-Location: ws://example.com/demo\r\n",
+      "Sec-WebSocket-Origin: http://example.com\r\n",
+      "Sec-WebSocket-Protocol: sample\r\n",
+      "\r\n",
+      "8jKS\'y:G*Co,Wxa-"
+    ]
         
     good_request = EventMachine::WebSocket::RequestHandler.new
     good_request.parse(GOOD_REQUEST)

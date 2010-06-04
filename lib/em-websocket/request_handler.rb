@@ -9,7 +9,8 @@ module EventMachine
   
       attr_reader :request, :response, :version
   
-      def initialize
+      def initialize(debug = false)
+        @debug = debug
         @request = {}
         @response = nil
         @version = nil
@@ -23,7 +24,6 @@ module EventMachine
     
         # extract query string values
         @request['Query'] = Addressable::URI.parse(@request['Path']).query_values ||= {}
-    
         # extract remaining headers
         lines.each do |line|
           h = HEADER.match(line)
@@ -38,13 +38,10 @@ module EventMachine
         
         @version = get_version(@request)
         raise unless @request['Connection'] == 'Upgrade' and @request['Upgrade'] == 'WebSocket'
-        
         @response = send("set_response_header_#{@version}")
-
         # upgrade connection and notify client callback
         # about completed handshake
         debug [:upgrade_headers, @response]
-        
         return true
       end
       
@@ -59,13 +56,13 @@ module EventMachine
         location << ":#{@request['Host'].port}" if @request['Host'].port
         location << @request['Path']
 
-        upgrade =  'HTTP/1.1 101 WebSocket Protocol Handshake\r\n'
-        upgrade << 'Upgrade: WebSocket\r\n'
-        upgrade << 'Connection: Upgrade\r\n'
-        upgrade << 'Sec-WebSocket-Location: '+ location + '\r\n'
-        upgrade << 'Sec-WebSocket-Origin: ' + @request['Origin'] + '\r\n'
-        upgrade << 'Sec-WebSocket-Protocol: ' + @request['Sec-WebSocket-Protocol']  + '\r\n'
-        upgrade << '\r\n'
+        upgrade =  "HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
+        upgrade << "Upgrade: WebSocket\r\n"
+        upgrade << "Connection: Upgrade\r\n"
+        upgrade << "Sec-WebSocket-Location: #{location}\r\n"
+        upgrade << "Sec-WebSocket-Origin: #{@request['Origin']}\r\n"
+        upgrade << "Sec-WebSocket-Protocol: #{@request['Sec-WebSocket-Protocol']}\r\n"  if @request['Sec-WebSocket-Protocol']
+        upgrade << "\r\n"
         upgrade << challenge_response
       end
       

@@ -3,7 +3,8 @@ require 'addressable/uri'
 module EventMachine
   module WebSocket
     class Connection < EventMachine::Connection
-
+      # "\377\000" is octet version and "\xff\x00" is hex version 
+      TERMINATE_STRING = "\xff\x00".map {|c| c}.to_s
       attr_reader :state, :request
 
       # define WebSocket callbacks
@@ -24,9 +25,24 @@ module EventMachine
 
       def receive_data(data)
         debug [:receive_data, data]
-
-        @data << data
-        dispatch
+        
+        # This logic is used for draft 76 only
+        # 
+        # 5.3 the server may decide to terminate the WebSocket connection by
+        # running through the following steps:
+        # 1. send a 0xFF byte and a 0x00 byte to the client to indicate the start
+        # of the closing handshake.
+        #
+        # NOTE
+        # pywebsocket have not implemented all close logic, so this may change soon
+        #
+        if data == TERMINATE_STRING
+          send_data(TERMINATE_STRING) 
+          unbind
+        else
+          @data << data
+          dispatch
+        end
       end
 
       def unbind
@@ -48,11 +64,12 @@ module EventMachine
       end
 
       def handshake
-        if @data.match(/\r\n\r\n$/)
+        # todo: Change to match with 8 unicoded bytes for draft 76
+        if @data.match(/\r\n\r\n$/) || @data.match(/\r\n\r\n.+$/m)
           debug [:inbound_headers, @data]
           lines = @data.split("\r\n")
           begin
-            handler = RequestHandler.new
+            handler = RequestHandler.new(@debug)
             handler.parse(lines)
             send_data handler.response
 
@@ -69,7 +86,6 @@ module EventMachine
           send_flash_cross_domain_file
           return false
         end
-
         false
       end
 
