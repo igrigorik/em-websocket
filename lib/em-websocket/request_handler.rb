@@ -16,11 +16,11 @@ module EventMachine
         @version = nil
       end
     
-      def parse(lines)
-        # extract request path
+      def parse(data)
+        lines = data.split("\r\n")
 
+        # extract request path
         @request['Path'] = lines.shift.match(PATH)[1].strip
-        # @request['Path'] = "/"
     
         # extract query string values
         @request['Query'] = Addressable::URI.parse(@request['Path']).query_values ||= {}
@@ -77,7 +77,9 @@ module EventMachine
         upgrade << "WebSocket-Origin: #{@request['Origin']}\r\n"
         upgrade << "WebSocket-Location: #{location}\r\n\r\n"
       end
+
     private
+
       def solve_challange(first, second, third)
         # Refer to 5.2 4-9 of the draft 76
         sum = (extract_nums(first) / count_spaces(first)).to_a.pack("N*") +

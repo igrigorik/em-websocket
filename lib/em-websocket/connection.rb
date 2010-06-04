@@ -67,10 +67,9 @@ module EventMachine
         # todo: Change to match with 8 unicoded bytes for draft 76
         if @data.match(/\r\n\r\n$/) || @data.match(/\r\n\r\n.+$/m)
           debug [:inbound_headers, @data]
-          lines = @data.split("\r\n")
           begin
             handler = RequestHandler.new(@debug)
-            handler.parse(lines)
+            handler.parse(@data)
             send_data handler.response
 
             @request = handler.request
