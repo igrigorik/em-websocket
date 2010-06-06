@@ -4,7 +4,7 @@ module EventMachine
   module WebSocket
     class Handler76 < Handler
       # "\377\000" is octet version and "\xff\x00" is hex version 
-      TERMINATE_STRING = "\xff\x00".map {|c| c}.to_s
+      TERMINATE_STRING = "\xff\x00"
       
       def handshake
         challenge_response = solve_challange(
@@ -50,8 +50,8 @@ module EventMachine
       
       def solve_challange(first, second, third)
         # Refer to 5.2 4-9 of the draft 76
-        sum = (extract_nums(first) / count_spaces(first)).to_a.pack("N*") +
-              (extract_nums(second) / count_spaces(second)).to_a.pack("N*") +
+        sum = [(extract_nums(first) / count_spaces(first))].pack("N*") +
+              [(extract_nums(second) / count_spaces(second))].pack("N*") +
               third
         Digest::MD5.digest(sum)
       end
