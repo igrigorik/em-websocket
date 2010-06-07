@@ -38,8 +38,8 @@ describe "WebSocket server draft76" do
         connection.send_data(format_request(@request))
         
         connection.onopen = lambda {
-          connection.handshake_response.sort.
-            should == format_response(@response).sort
+          connection.handshake_response.lines.sort.
+            should == format_response(@response).lines.sort
           EM.stop
         }
       end

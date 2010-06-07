@@ -51,6 +51,6 @@ end
 
 def send_handshake(response)
   simple_matcher do |given|
-    given.handshake.sort == format_response(response).sort
+    given.handshake.lines.sort == format_response(response).lines.sort
   end
 end
