@@ -12,7 +12,7 @@ module EventMachine
       end
 
       def handshake
-        # Implemented in subsclass
+        # Implemented in subclass
       end
 
       def should_close?(data)

@@ -25,8 +25,8 @@ module EventMachine
         debug [:receive_data, data]
         
         if @handler && @handler.should_close?(data)
-          send_data(data) 
-          unbind
+          send_data(data)
+          close_connection_after_writing
         else
           @data << data
           dispatch

@@ -1,30 +1,6 @@
 require 'spec/helper'
 
 describe "EventMachine::WebSocket::Handler" do
-  def format_request(r)
-    data = "#{r[:method]} #{r[:path]} HTTP/1.1\r\n"
-    header_lines = r[:headers].map { |k,v| "#{k}: #{v}" }
-    data << [header_lines, '', r[:body]].join("\r\n")
-    data
-  end
-
-  def format_response(r)
-    data = "HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
-    header_lines = r[:headers].map { |k,v| "#{k}: #{v}" }
-    data << [header_lines, '', r[:body]].join("\r\n")
-    data
-  end
-
-  def handler(request)
-    EM::WebSocket::HandlerFactory.build(format_request(request))
-  end
-  
-  def send_handshake(response)
-    simple_matcher do |given|
-      given.handshake.sort == format_response(response).sort
-    end
-  end
-
   before :each do
     @request = {
       :port => 80,
