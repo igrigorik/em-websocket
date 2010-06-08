@@ -1,3 +1,5 @@
+require 'spec/helper'
+
 describe "WebSocket server draft76" do
   before :each do
     @request = {
@@ -50,21 +52,48 @@ describe "WebSocket server draft76" do
     EM.run do
       EM.add_timer(0.1) do
         EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
-
+  
         # Create a fake client which sends draft 76 handshake
         connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
         connection.send_data(format_request(@request))
-
-        # Send termination string after handshake complete
+  
+        # Send closing frame after handshake complete
         connection.onopen = lambda {
           connection.send_data(EM::WebSocket::Handler76::TERMINATE_STRING)
         }
-
+  
         # Check that this causes a termination string to be returned and the 
         # connection close
         connection.onclose = lambda {
           connection.packets[0].should == 
             EM::WebSocket::Handler76::TERMINATE_STRING
+          EM.stop
+        }
+      end
+    end
+  end
+  
+  it "should ignore any data received after the closing frame" do
+    EM.run do
+      EM.add_timer(0.1) do
+        EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+          # Fail if foobar message is received
+          ws.onmessage { |msg|
+            failed
+          }
+        }
+        
+        # Create a fake client which sends draft 76 handshake
+        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+        connection.send_data(format_request(@request))
+  
+        # Send closing frame after handshake complete, followed by another msg
+        connection.onopen = lambda {
+          connection.send_data(EM::WebSocket::Handler76::TERMINATE_STRING)
+          connection.send('foobar')
+        }
+  
+        connection.onclose = lambda {
           EM.stop
         }
       end

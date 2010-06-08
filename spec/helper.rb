@@ -26,9 +26,18 @@ class FakeWebSocketClient < EM::Connection
     end
   end
 
+  def send(data)
+    send_data("\x00#{data}\xff")
+  end
+
   def unbind
     @onclose.call if @onclose
   end
+end
+
+def failed
+  EventMachine.stop
+  fail
 end
 
 def format_request(r)

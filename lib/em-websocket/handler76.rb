@@ -34,18 +34,6 @@ module EventMachine
         return upgrade
       end
 
-      def should_close?(data)
-        # 5.3 the server may decide to terminate the WebSocket connection by
-        # running through the following steps:
-        # 1. send a 0xFF byte and a 0x00 byte to the client to indicate the start
-        # of the closing handshake.
-        #
-        # NOTE
-        # pywebsocket have not implemented all close logic, so this may change soon
-        #
-        data == TERMINATE_STRING
-      end
-
       private
 
       def solve_challange(first, second, third)

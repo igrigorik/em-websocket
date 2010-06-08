@@ -2,11 +2,6 @@ require 'spec/helper'
 
 describe EventMachine::WebSocket do
 
-  def failed
-    EventMachine.stop
-    fail
-  end
-
   it "should automatically complete WebSocket handshake" do
     EM.run do
       MSG = "Hello World!"

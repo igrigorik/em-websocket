@@ -15,10 +15,6 @@ module EventMachine
         # Implemented in subclass
       end
 
-      def should_close?(data)
-        false
-      end
-
       private
 
       def debug(*data)
