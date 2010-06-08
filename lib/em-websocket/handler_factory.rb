@@ -3,11 +3,11 @@ module EventMachine
     class HandlerFactory
       PATH   = /^(\w+) (\/[^\s]*) HTTP\/1\.1$/
       HEADER = /^([^:]+):\s*([^$]+)/
-      
+
       def self.build(data, debug = false)
         request = {}
         response = nil
-        
+
         lines = data.split("\r\n")
 
         # extract request path
@@ -36,7 +36,7 @@ module EventMachine
         request['Host'] = Addressable::URI.parse("ws://"+request['Host'])
 
         version = request['Sec-WebSocket-Key1'] ? 76 : 75
-        
+
         case version
         when 75
           Handler75.new(request, response, debug)

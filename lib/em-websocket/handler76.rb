@@ -3,13 +3,13 @@ require 'digest/md5'
 module EventMachine
   module WebSocket
     class Handler76 < Handler
-      # "\377\000" is octet version and "\xff\x00" is hex version 
+      # "\377\000" is octet version and "\xff\x00" is hex version
       TERMINATE_STRING = "\xff\x00"
-      
+
       def handshake
         challenge_response = solve_challange(
-          @request['Sec-WebSocket-Key1'], 
-          @request['Sec-WebSocket-Key2'], 
+          @request['Sec-WebSocket-Key1'],
+          @request['Sec-WebSocket-Key2'],
           @request['Third-Key']
         )
 
@@ -28,12 +28,12 @@ module EventMachine
         end
         upgrade << "\r\n"
         upgrade << challenge_response
-        
+
         debug [:upgrade_headers, upgrade]
-        
+
         return upgrade
       end
-      
+
       def should_close?(data)
         # 5.3 the server may decide to terminate the WebSocket connection by
         # running through the following steps:
@@ -45,14 +45,14 @@ module EventMachine
         #
         data == TERMINATE_STRING
       end
-      
+
       private
-      
+
       def solve_challange(first, second, third)
         # Refer to 5.2 4-9 of the draft 76
         sum = [(extract_nums(first) / count_spaces(first))].pack("N*") +
-              [(extract_nums(second) / count_spaces(second))].pack("N*") +
-              third
+          [(extract_nums(second) / count_spaces(second))].pack("N*") +
+          third
         Digest::MD5.digest(sum)
       end
 
@@ -61,9 +61,9 @@ module EventMachine
       end
 
       def count_spaces(string)
-        string.scan(/ /).size        
+        string.scan(/ /).size
       end
-      
+
       def validate_protocol!(protocol)
         raise HandshakeError, "Invalid WebSocket-Protocol: empty" if protocol.empty?
         # TODO: Validate characters

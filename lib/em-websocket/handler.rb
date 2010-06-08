@@ -1,7 +1,7 @@
 module EventMachine
   module WebSocket
     class HandshakeError < RuntimeError; end
-    
+
     class Handler
       attr_reader :request
 
@@ -19,7 +19,7 @@ module EventMachine
         false
       end
 
-    private
+      private
 
       def debug(*data)
         if @debug

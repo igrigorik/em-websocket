@@ -23,7 +23,7 @@ module EventMachine
 
       def receive_data(data)
         debug [:receive_data, data]
-        
+
         if @handler && @handler.should_close?(data)
           send_data(data)
           close_connection_after_writing
