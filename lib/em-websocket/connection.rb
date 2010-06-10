@@ -3,6 +3,8 @@ require 'addressable/uri'
 module EventMachine
   module WebSocket
     class Connection < EventMachine::Connection
+      include Debugger
+
       attr_reader :state, :request
 
       # define WebSocket callbacks
@@ -119,7 +121,7 @@ module EventMachine
               # 6. Read /length/ bytes.
               # 7. Discard the read bytes.
               @data = @data[(pointer+length)..-1]
-            
+
               # If the /frame type/ is 0xFF and the /length/ was 0, then close
               if length == 0
                 send_data("\xff\x00")
@@ -158,16 +160,6 @@ module EventMachine
       def send(data)
         debug [:send, data]
         send_data("\x00#{data}\xff")
-      end
-
-      private
-
-      def debug(*data)
-        if @debug
-          require 'pp'
-          pp data
-          puts
-        end
       end
     end
   end

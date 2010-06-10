@@ -3,6 +3,8 @@ module EventMachine
     class HandshakeError < RuntimeError; end
 
     class Handler
+      include Debugger
+
       attr_reader :request
 
       def initialize(request, response, debug = false)
@@ -13,16 +15,6 @@ module EventMachine
 
       def handshake
         # Implemented in subclass
-      end
-
-      private
-
-      def debug(*data)
-        if @debug
-          require 'pp'
-          pp data
-          puts
-        end
       end
     end
   end
