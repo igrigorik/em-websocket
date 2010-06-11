@@ -17,6 +17,7 @@ describe "EventMachine::WebSocket::Handler" do
       },
       :body => '^n:ds[4U'
     }
+    @secure_request = @request.merge(:port => 443)
 
     @response = {
       :headers => {
@@ -28,14 +29,19 @@ describe "EventMachine::WebSocket::Handler" do
       },
       :body => "8jKS\'y:G*Co,Wxa-"
     }
+    @secure_response = @response.merge(:headers => @response[:headers].merge('Sec-WebSocket-Location' => "wss://example.com/demo"))
   end
 
   it "should handle good request" do
     handler(@request).should send_handshake(@response)
   end
 
-  it "should handle good request to secure default port" do
-    pending "No SSL support yet"
+  it "should handle good request to secure default port if secure mode is enabled" do
+    handler(@secure_request, true).should send_handshake(@secure_response)
+  end
+
+  it "should not handle good request to secure default port if secure mode is disabled" do
+    handler(@secure_request, false).should_not send_handshake(@secure_response)
   end
 
   it "should handle good request on nondefault port" do
@@ -48,7 +54,10 @@ describe "EventMachine::WebSocket::Handler" do
   end
 
   it "should handle good request to secure nondefault port" do
-    pending "No SSL support yet"
+    @secure_request[:port] = 8081
+    @secure_request[:headers]['Host'] = 'example.com:8081'
+    @secure_response[:headers]['Sec-WebSocket-Location'] = 'wss://example.com:8081/demo'
+    handler(@secure_request, true).should send_handshake(@secure_response)
   end
 
   it "should handle good request with no protocol" do

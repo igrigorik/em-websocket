@@ -15,12 +15,17 @@ module EventMachine
       def initialize(options)
         @options = options
         @debug = options[:debug] || false
+        @secure = options[:secure] || false
         @state = :handshake
         @request = {}
         @data = ''
         @skip_onclose = false
 
         debug [:initialize]
+      end
+
+      def post_init
+        start_tls if @secure
       end
 
       def receive_data(data)
@@ -54,7 +59,7 @@ module EventMachine
         else
           debug [:inbound_headers, @data]
           begin
-            @handler = HandlerFactory.build(@data, @debug)
+            @handler = HandlerFactory.build(@data, @secure, @debug)
             @data = ''
             send_data @handler.handshake
 

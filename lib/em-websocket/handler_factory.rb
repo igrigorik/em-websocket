@@ -4,7 +4,7 @@ module EventMachine
       PATH   = /^(\w+) (\/[^\s]*) HTTP\/1\.1$/
       HEADER = /^([^:]+):\s*([^$]+)/
 
-      def self.build(data, debug = false)
+      def self.build(data, secure = false, debug = false)
         request = {}
         response = nil
 
@@ -33,7 +33,8 @@ module EventMachine
         end
 
         # transform headers
-        request['Host'] = Addressable::URI.parse("ws://"+request['Host'])
+        protocol = (secure ? "wss" : "ws")
+        request['Host'] = Addressable::URI.parse("#{protocol}://"+request['Host'])
 
         version = request['Sec-WebSocket-Key1'] ? 76 : 75
 

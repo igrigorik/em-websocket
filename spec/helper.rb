@@ -54,8 +54,8 @@ def format_response(r)
   data
 end
 
-def handler(request)
-  EM::WebSocket::HandlerFactory.build(format_request(request))
+def handler(request, secure = false)
+  EM::WebSocket::HandlerFactory.build(format_request(request), secure)
 end
 
 def send_handshake(response)

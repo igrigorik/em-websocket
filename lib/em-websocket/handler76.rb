@@ -13,7 +13,7 @@ module EventMachine
           @request['Third-Key']
         )
 
-        location  = "ws://#{@request['Host'].host}"
+        location  = "#{@request['Host'].scheme}://#{@request['Host'].host}"
         location << ":#{@request['Host'].port}" if @request['Host'].port
         location << @request['Path']
 
