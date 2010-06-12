@@ -2,7 +2,7 @@ module EventMachine
   module WebSocket
     class Handler75 < Handler
       def handshake
-        location  = "ws://#{@request['Host'].host}"
+        location  = "#{@request['Host'].scheme}://#{@request['Host'].host}"
         location << ":#{@request['Host'].port}" if @request['Host'].port
         location << @request['Path']
 
