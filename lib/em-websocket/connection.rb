@@ -95,7 +95,7 @@ module EventMachine
 
         while !error
           pointer = 0
-          frame_type = @data[pointer]
+          frame_type = @data[pointer].to_i
           pointer += 1
 
           if (frame_type & 0x80) == 0x80
@@ -103,7 +103,7 @@ module EventMachine
             length = 0
 
             loop do
-              b = @data[pointer]
+              b = @data[pointer].to_i
               return false unless b
               pointer += 1
               b_v = b & 0x7F
