@@ -18,7 +18,6 @@ module EventMachine
         @state = :handshake
         @request = {}
         @data = ''
-        @skip_onclose = false
 
         debug [:initialize]
       end
