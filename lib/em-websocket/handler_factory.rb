@@ -2,7 +2,7 @@ module EventMachine
   module WebSocket
     class HandlerFactory
       PATH   = /^(\w+) (\/[^\s]*) HTTP\/1\.1$/
-      HEADER = /^([^:]+):\s*([^$]+)/
+      HEADER = /^([^:]+):\s*(.+)$/
 
       def self.build(data, secure = false, debug = false)
         request = {}
