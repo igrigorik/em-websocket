@@ -49,7 +49,10 @@ module EventMachine
       end
 
       def count_spaces(string)
-        string.scan(/ /).size
+        spaces = string.scan(/ /).size
+        # As per 5.2.5, abort the connection if spaces are zero.
+        raise HandshakeError, "Websocket Key1 or Key2 does not contain spaces - this is a symptom of a cross-protocol attack" if spaces == 0
+        return spaces
       end
 
       def validate_protocol!(protocol)

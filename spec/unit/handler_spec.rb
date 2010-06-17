@@ -114,4 +114,14 @@ describe "EventMachine::WebSocket::Handler" do
       handler(@request).handshake
     }.should raise_error(EM::WebSocket::HandshakeError)
   end
+
+  %w[Sec-WebSocket-Key1 Sec-WebSocket-Key2].each do |header|
+    it "should raise error if #{header} has zero spaces" do
+      @request[:headers][header] = 'nospaces'
+
+      lambda {
+        handler(@request).handshake
+      }.should raise_error(EM::WebSocket::HandshakeError, 'Websocket Key1 or Key2 does not contain spaces - this is a symptom of a cross-protocol attack')
+    end
+  end
 end
