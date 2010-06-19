@@ -18,7 +18,6 @@ describe EventMachine::WebSocket do
 
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen {
-          puts "WebSocket connection open"
           ws.send MSG
         }
       end
