@@ -143,6 +143,7 @@ module EventMachine
               if @state == :closing
                 debug [:ignored_message, msg]
               else
+                msg.force_encoding('UTF-8') if msg.respond_to?(:force_encoding)
                 @onmessage.call(msg) if @onmessage
               end
             else
@@ -163,6 +164,7 @@ module EventMachine
       # a leading length indicator
       def send(data)
         debug [:send, data]
+        data.force_encoding('ASCII-8BIT') if data.respond_to?(:force_encoding)
         send_data("\x00#{data}\xff")
       end
     end
