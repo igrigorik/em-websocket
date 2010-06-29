@@ -164,8 +164,9 @@ module EventMachine
       # a leading length indicator
       def send(data)
         debug [:send, data]
-        data.force_encoding('ASCII-8BIT') if data.respond_to?(:force_encoding)
-        send_data("\x00#{data}\xff")
+        ary = ["\x00", data, "\xff"]
+        ary.collect{ |s| s.force_encoding('UTF-8') if s.respond_to?(:force_encoding) }
+        send_data(ary.join)
       end
     end
   end
