@@ -99,4 +99,30 @@ describe "WebSocket server draft76" do
       end
     end
   end
+
+  it "should accept null bytes within the frame after a line return" do
+    EM.run do
+      EM.add_timer(0.1) do
+        EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+          ws.onmessage { |msg|
+            msg.should == "\n\000" 
+          }
+        }
+  
+        # Create a fake client which sends draft 76 handshake
+        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+        connection.send_data(format_request(@request))
+  
+        # Send closing frame after handshake complete
+        connection.onopen = lambda {
+          connection.send_data("\000\n\000\377")
+          connection.send_data(EM::WebSocket::Handler76::TERMINATE_STRING)
+        }
+  
+        connection.onclose = lambda {
+          EM.stop
+        }
+      end
+    end
+  end
 end

@@ -139,7 +139,7 @@ module EventMachine
             # If the high-order bit of the /frame type/ byte is _not_ set
             msg = @data.slice!(/^\x00([^\xff]*)\xff/)
             if msg
-              msg.gsub!(/^\x00|\xff$/, '')
+              msg.gsub!(/\A\x00|\xff\z/, '')
               if @state == :closing
                 debug [:ignored_message, msg]
               else
