@@ -17,6 +17,7 @@ module EventMachine
         @options = options
         @debug = options[:debug] || false
         @secure = options[:secure] || false
+        @tls_options = options[:tls_options] || {}
         @state = :handshake
         @request = {}
         @data = ''
@@ -25,7 +26,7 @@ module EventMachine
       end
 
       def post_init
-        start_tls if @secure
+        start_tls(@tls_options) if @secure
       end
 
       def receive_data(data)
