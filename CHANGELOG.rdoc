@@ -1,0 +1,28 @@
+= Changelog
+
+== 0.1.3 / 2010-07-18
+
+- new features:
+  - onerror callback
+- bugfixes:
+  - proper handling of zero spaces in key1 or key2(prevent ZeroDivisionError)
+  - convert received data to utf-8 to prevent ruby 1.9 errors
+  - fix handling of null bytes within a frame
+
+== 0.1.2 / 2010-06-16
+
+- new features:
+  - none
+- bugfixes:
+  - allow $ character inside header key
+
+== 0.1.1 / 2010-06-13
+
+- new features:
+  - wss/ssl support
+- bugfixes:
+  - can't & strings
+
+== 0.1.0 / 2010-06-12
+
+- initial release
