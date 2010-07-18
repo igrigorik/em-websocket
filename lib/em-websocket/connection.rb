@@ -10,6 +10,7 @@ module EventMachine
       # define WebSocket callbacks
       def onopen(&blk);     @onopen = blk;    end
       def onclose(&blk);    @onclose = blk;   end
+      def onerror(&blk);    @onerror = blk;   end
       def onmessage(&blk);  @onmessage = blk; end
 
       def initialize(options)
@@ -68,13 +69,14 @@ module EventMachine
             return true
           rescue => e
             debug [:error, e]
-            process_bad_request
+            process_bad_request(e)
             return false
           end
         end
       end
 
-      def process_bad_request
+      def process_bad_request(reason)
+        @onerror.call(reason) if @onerror
         send_data "HTTP/1.1 400 Bad request\r\n\r\n"
         close_connection_after_writing
       end

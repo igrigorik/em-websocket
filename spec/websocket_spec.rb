@@ -90,6 +90,26 @@ describe EventMachine::WebSocket do
     end
   end
 
+  it "should call onerror callback with raised exception and close connection on bad handshake" do
+    EM.run do
+      EventMachine.add_timer(0.1) do
+        http = EventMachine::HttpRequest.new('http://127.0.0.1:12345/').get :timeout => 0
+        http.errback { http.response_header.status.should == 0 }
+        http.callback { failed }
+      end
+
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
+        ws.onopen { failed }
+        ws.onclose { EventMachine.stop }
+        ws.onerror {|e|
+          e.should be_an_instance_of EventMachine::WebSocket::HandshakeError
+          e.message.should match('Connection and Upgrade headers required')
+          EventMachine.stop
+        }
+      end
+    end
+  end
+
   it "should populate ws.request with appropriate headers" do
     EM.run do
       EventMachine.add_timer(0.1) do
