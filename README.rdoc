@@ -24,6 +24,24 @@ check out the blog post below:
     end
   }
 
+== Secure server
+
+It is possible to accept secure wss:// connections by passing :secure => true when opening the connection. Safari 5 does not currently support prompting on untrusted SSL certificates therefore using signed certificates is highly recommended. Pass a :tls_options hash containing keys as described in http://eventmachine.rubyforge.org/EventMachine/Connection.html#M000296
+
+For example,
+
+  EventMachine::WebSocket.start({
+    :host => "0.0.0.0",
+    :port => 443
+    :secure => true,
+    :tls_options => {
+      :private_key_file => "/private/key",
+      :cert_chain_file => "/ssl/certificate"
+    }
+  }) do |ws|
+    ...
+  end
+
 == Examples
 - examples/multicast.rb - broadcast all ruby tweets to all subscribers
 - examples/echo.rb - server <> client exchange via a websocket
