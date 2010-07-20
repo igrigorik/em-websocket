@@ -44,7 +44,7 @@ module EventMachine
         when 76
           Handler76.new(request, response, debug)
         else
-          raise "Must not happen"
+          raise WebSocketError, "Must not happen"
         end
       end
     end

@@ -53,7 +53,7 @@ module EventMachine
             handshake
           when :connected
             process_message
-          else raise RuntimeError, "invalid state: #{@state}"
+          else raise WebSocketError, "invalid state: #{@state}"
         end
       end
 
@@ -125,7 +125,7 @@ module EventMachine
 
             # Addition to the spec to protect against malicious requests
             if length > MAXIMUM_FRAME_LENGTH
-              close_with_error(RuntimeError.new("Frame length too long (#{length} bytes)"))
+              close_with_error(DataError.new("Frame length too long (#{length} bytes)"))
               return false
             end
 

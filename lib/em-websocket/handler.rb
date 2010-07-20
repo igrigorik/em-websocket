@@ -1,7 +1,5 @@
 module EventMachine
   module WebSocket
-    class HandshakeError < RuntimeError; end
-
     class Handler
       include Debugger
 
