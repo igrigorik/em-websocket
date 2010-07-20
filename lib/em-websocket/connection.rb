@@ -7,6 +7,10 @@ module EventMachine
 
       attr_reader :state, :request
 
+      # Set the max frame lenth to very high value (10MB) until there is a
+      # limit specified in the spec to protect against malicious attacks
+      MAXIMUM_FRAME_LENGTH = 10 * 1024 * 1024
+
       # define WebSocket callbacks
       def onopen(&blk);     @onopen = blk;    end
       def onclose(&blk);    @onclose = blk;   end
@@ -119,6 +123,12 @@ module EventMachine
               break unless (b & 0x80) == 0x80
             end
 
+            # Addition to the spec to protect against malicious requests
+            if length > MAXIMUM_FRAME_LENGTH
+              close_with_error(RuntimeError.new("Frame length too long (#{length} bytes)"))
+              return false
+            end
+
             if @data[pointer+length-1] == nil
               debug [:buffer_incomplete, @data.inspect]
               # Incomplete data - leave @data to accumulate
@@ -170,6 +180,11 @@ module EventMachine
         ary = ["\x00", data, "\xff"]
         ary.collect{ |s| s.force_encoding('UTF-8') if s.respond_to?(:force_encoding) }
         send_data(ary.join)
+      end
+
+      def close_with_error(message)
+        @onerror.call(message) if @onerror
+        close_connection_after_writing
       end
     end
   end

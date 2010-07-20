@@ -125,4 +125,27 @@ describe "WebSocket server draft76" do
       end
     end
   end
+
+  it "should handle unreasonable frame lengths by calling onerror callback" do
+    EM.run do
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |server|
+        server.onerror { |error|
+          error.message.should == "Frame length too long (1180591620717411303296 bytes)"
+          EM.stop
+        }
+      }
+
+      # Create a fake client which sends draft 76 handshake
+      client = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+      client.send_data(format_request(@request))
+
+      # This particular frame indicates a message length of
+      # 1180591620717411303296 bytes. Such a message would previously cause
+      # a "bignum too big to convert into `long'" error.
+      # However it is clearly unreasonable and should be rejected.
+      client.onopen = lambda {
+        client.send_data("\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00")
+      }
+    end
+  end
 end
