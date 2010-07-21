@@ -12,6 +12,7 @@ module EventMachine
 
         # extract request path
         first_line = lines.shift.match(PATH)
+        raise HandshakeError, "Invalid HTTP header" unless first_line
         request['Method'] = first_line[1].strip
         request['Path'] = first_line[2].strip
 

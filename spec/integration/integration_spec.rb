@@ -149,4 +149,19 @@ describe "WebSocket server draft76" do
       }
     end
   end
+  
+  it "should handle invalid http requests by raising HandshakeError passed to onerror callback" do
+    EM.run {
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |server|
+        server.onerror { |error|
+          error.should be_an_instance_of EM::WebSocket::HandshakeError
+          error.message.should == "Invalid HTTP header"
+          EM.stop
+        }
+      }
+      
+      client = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+      client.send_data("This is not a HTTP header")
+    }
+  end
 end
