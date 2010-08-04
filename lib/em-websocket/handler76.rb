@@ -7,7 +7,7 @@ module EventMachine
       TERMINATE_STRING = "\xff\x00"
 
       def handshake
-        challenge_response = solve_challange(
+        challenge_response = solve_challenge(
           @request['Sec-WebSocket-Key1'],
           @request['Sec-WebSocket-Key2'],
           @request['Third-Key']
@@ -36,7 +36,7 @@ module EventMachine
 
       private
 
-      def solve_challange(first, second, third)
+      def solve_challenge(first, second, third)
         # Refer to 5.2 4-9 of the draft 76
         sum = [(extract_nums(first) / count_spaces(first))].pack("N*") +
           [(extract_nums(second) / count_spaces(second))].pack("N*") +
