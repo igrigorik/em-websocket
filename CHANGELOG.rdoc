@@ -1,5 +1,14 @@
 = Changelog
 
+== 0.1.4 / 2010-08-23
+
+- new features:
+  - Allow custom ssl certificate to be used by passing :tls_options
+  - Protect against errors caused by non limited frame lengths
+  - Use custom exceptions rather than RuntimeError
+- bugfixes:
+  - Handle invalid HTTP request with HandshakeError
+
 == 0.1.3 / 2010-07-18
 
 - new features:

@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{em-websocket}
-  s.version = "0.1.3"
+  s.version = "0.1.4"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Ilya Grigorik"]
-  s.date = %q{2010-07-18}
+  s.date = %q{2010-08-23}
   s.description = %q{EventMachine based WebSocket server}
   s.email = %q{ilya@igvita.com}
   s.extra_rdoc_files = [
@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
   ]
   s.files = [
     ".gitignore",
+     "CHANGELOG.rdoc",
      "README.rdoc",
      "Rakefile",
      "VERSION",
