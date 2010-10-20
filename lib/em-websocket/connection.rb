@@ -64,7 +64,7 @@ module EventMachine
         else
           debug [:inbound_headers, @data]
           begin
-            @handler = HandlerFactory.build(@data, @secure, @debug)
+            @handler = HandlerFactory.build(self, @data, @secure, @debug)
             @data = ''
             send_data @handler.handshake
 

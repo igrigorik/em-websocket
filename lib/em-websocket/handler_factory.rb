@@ -4,9 +4,8 @@ module EventMachine
       PATH   = /^(\w+) (\/[^\s]*) HTTP\/1\.1$/
       HEADER = /^([^:]+):\s*(.+)$/
 
-      def self.build(data, secure = false, debug = false)
+      def self.build(connection, data, secure = false, debug = false)
         request = {}
-        response = nil
 
         lines = data.split("\r\n")
 
@@ -41,9 +40,9 @@ module EventMachine
 
         case version
         when 75
-          Handler75.new(request, response, debug)
+          Handler75.new(connection, request, debug)
         when 76
-          Handler76.new(request, response, debug)
+          Handler76.new(connection, request, debug)
         else
           raise WebSocketError, "Must not happen"
         end

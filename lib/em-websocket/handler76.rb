@@ -8,21 +8,21 @@ module EventMachine
 
       def handshake
         challenge_response = solve_challenge(
-          @request['Sec-WebSocket-Key1'],
-          @request['Sec-WebSocket-Key2'],
-          @request['Third-Key']
+          request['Sec-WebSocket-Key1'],
+          request['Sec-WebSocket-Key2'],
+          request['Third-Key']
         )
 
-        location  = "#{@request['Host'].scheme}://#{@request['Host'].host}"
-        location << ":#{@request['Host'].port}" if @request['Host'].port
-        location << @request['Path']
+        location  = "#{request['Host'].scheme}://#{request['Host'].host}"
+        location << ":#{request['Host'].port}" if request['Host'].port
+        location << request['Path']
 
         upgrade =  "HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
         upgrade << "Upgrade: WebSocket\r\n"
         upgrade << "Connection: Upgrade\r\n"
         upgrade << "Sec-WebSocket-Location: #{location}\r\n"
-        upgrade << "Sec-WebSocket-Origin: #{@request['Origin']}\r\n"
-        if protocol = @request['Sec-WebSocket-Protocol']
+        upgrade << "Sec-WebSocket-Origin: #{request['Origin']}\r\n"
+        if protocol = request['Sec-WebSocket-Protocol']
           validate_protocol!(protocol)
           upgrade << "Sec-WebSocket-Protocol: #{protocol}\r\n"
         end

@@ -5,9 +5,8 @@ module EventMachine
 
       attr_reader :request
 
-      def initialize(request, response, debug = false)
-        @request = request
-        @response = response
+      def initialize(connection, request, debug = false)
+        @connection, @request = connection, request
         @debug = debug
       end
 
