@@ -190,4 +190,19 @@ describe EventMachine::WebSocket do
     end
   end
 
+  it "should raise an exception if frame sent before handshake complete" do
+    EM.run {
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |c|
+        # We're not using a real client so the handshake will not be sent
+        EM.add_timer(0.1) {
+          lambda {
+            c.send('early message')
+          }.should raise_error('Cannot send data before onopen callback')
+          EM.stop
+        }
+      }
+
+      client = EM.connect('0.0.0.0', 12345, EM::Connection)
+    }
+  end
 end

@@ -86,18 +86,14 @@ module EventMachine
         close_connection_after_writing
       end
 
-      # should only be invoked after handshake, otherwise it
-      # will inject data into the header exchange
-      #
-      # frames need to start with 0x00-0x7f byte and end with
-      # an 0xFF byte. Per spec, we can also set the first
-      # byte to a value betweent 0x80 and 0xFF, followed by
-      # a leading length indicator
       def send(data)
         debug [:send, data]
-        ary = ["\x00", data, "\xff"]
-        ary.collect{ |s| s.force_encoding('UTF-8') if s.respond_to?(:force_encoding) }
-        send_data(ary.join)
+
+        if @handler
+          @handler.send_frame(data)
+        else
+          raise WebSocketError, "Cannot send data before onopen callback"
+        end
       end
 
       def close_with_error(message)
