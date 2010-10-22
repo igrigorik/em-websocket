@@ -95,4 +95,14 @@ describe EM::WebSocket::Framing03 do
       @f << "\x05\x7F\x00\x00\x00\x00\x00\x01\x00\x00" + data
     end
   end
+
+  describe "error cases" do
+    it "should raise an exception on continuation frame without preceeding more frame" do
+      lambda {
+        @f << 0b00000000 # Single frame, continuation
+        @f << 0b00000001 # Length 1
+        @f << 'f'
+      }.should raise_error(EM::WebSocket::WebSocketError, 'Continuation frame not expected')
+    end
+  end
 end

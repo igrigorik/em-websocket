@@ -64,22 +64,10 @@ module EventMachine
           # Read application data
           application_data = @data.slice!(0...payload_length)
 
-          frame_type = case opcode
-          when 0
-            raise('Continuation frame not expected') unless @frame_type
-            :continuation
-          when 1
-            :close
-          when 2
-            :ping
-          when 3
-            :pong
-          when 4
-            :text
-          when 5
-            :binary
-          else
-            :reserved
+          frame_type = opcode_to_type(opcode)
+
+          if frame_type == :continuation && !@frame_type
+            raise WebSocketError, 'Continuation frame not expected'
           end
 
           if more
