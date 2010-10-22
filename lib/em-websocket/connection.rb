@@ -31,6 +31,18 @@ module EventMachine
         debug [:initialize]
       end
 
+      # Use this method to close the websocket connection cleanly
+      # This sends a close frame and waits for acknowlegement before closing
+      # the connection
+      def close_websocket
+        if @handler
+          @handler.close_websocket
+        else
+          # The handshake hasn't completed - should be safe to terminate
+          close_connection
+        end
+      end
+
       def post_init
         start_tls(@tls_options) if @secure
       end
@@ -90,7 +102,7 @@ module EventMachine
         debug [:send, data]
 
         if @handler
-          @handler.send_frame(data)
+          @handler.send_text_frame(data)
         else
           raise WebSocketError, "Cannot send data before onopen callback"
         end

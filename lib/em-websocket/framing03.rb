@@ -101,6 +101,8 @@ module EventMachine
       end
       
       def send_frame(frame_type, application_data)
+        raise "Cannot send more frames since connection is closing" if @state == :closing
+
         frame = ''
 
         opcode = type_to_opcode(frame_type)
@@ -124,6 +126,10 @@ module EventMachine
         @connection.send_data(frame)
       end
 
+      def send_text_frame(data)
+        send_frame(:text, data)
+      end
+
       private
 
       def message(message_type, extension_data, application_data)
@@ -137,7 +143,10 @@ module EventMachine
             @state = :closed
           else
             # Acknowlege close
+            # The connection is considered closed
             send_frame(:close, application_data)
+            @state = :closed
+            @connection.close_connection_after_writing
           end
         when :ping
           # Pong back the same data
