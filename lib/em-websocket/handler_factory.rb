@@ -38,13 +38,18 @@ module EventMachine
 
         version = request['Sec-WebSocket-Key1'] ? 76 : 75
 
-        case version
-        when 75
-          Handler75.new(connection, request, debug)
-        when 76
+        if version = request['Sec-WebSocket-Draft']
+          if version == '1' || version == '2' || version == '3'
+            # We'll use handler03 - I believe they're all compatible
+            Handler03.new(connection, request, debug)
+          else
+            # According to spec should abort the connection
+            raise WebSocketError, "Unknown draft version: #{version}"
+          end
+        elsif request['Sec-WebSocket-Key1']
           Handler76.new(connection, request, debug)
         else
-          raise WebSocketError, "Must not happen"
+          Handler75.new(connection, request, debug)
         end
       end
     end

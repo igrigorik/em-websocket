@@ -100,8 +100,71 @@ module EventMachine
         end # end while
       end
       
+      def send_frame(frame_type, application_data)
+        frame = ''
+
+        opcode = type_to_opcode(frame_type)
+        byte1 = opcode # since more, rsv1-3 are 0
+        frame << byte1
+
+        length = application_data.size
+        if length <= 125
+          byte2 = length # since rsv4 is 0
+          frame << byte2
+        elsif length < 65536 # write 2 byte length
+          frame << 126
+          frame << [length].pack('n')
+        else # write 8 byte length
+          frame << 127
+          frame << [length >> 32, length & 0xFFFFFFFF].pack("NN")
+        end
+
+        frame << application_data
+
+        @connection.send_data(frame)
+      end
+
+      private
+
       def message(message_type, extension_data, application_data)
-        # TODO
+        case message_type
+        when :close
+          if @state == :closing
+            # TODO: Check that message body matches sent data
+            # We can close connection immediately since there is no more data
+            # is allowed to be sent or received on this connection
+            @connection.close_connection
+            @state = :closed
+          else
+            # Acknowlege close
+            send_frame(:close, application_data)
+          end
+        when :ping
+          # Pong back the same data
+          send_frame(:pong, application_data)
+        when :pong
+          # TODO: Do something. Complete a deferrable established by a ping?
+        when :text, :binary
+          @connection.trigger_on_message(application_data)
+        end
+      end
+
+      FRAME_TYPES = {
+        :continuation => 0,
+        :close => 1,
+        :ping => 2,
+        :pong => 3,
+        :text => 4,
+        :binary => 5
+      }
+      FRAME_TYPES_INVERSE = FRAME_TYPES.invert
+
+      def type_to_opcode(frame_type)
+        FRAME_TYPES[frame_type] || raise("Unknown frame type")
+      end
+
+      def opcode_to_type(opcode)
+        FRAME_TYPES_INVERSE[opcode] || raise("Unknown opcode")
       end
     end
   end

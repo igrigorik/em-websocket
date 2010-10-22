@@ -21,7 +21,7 @@ class FakeWebSocketClient < EM::Connection
       @onopen.call if @onopen
       @state = :open
     else
-      @onmessage.call if @onmessage
+      @onmessage.call(data) if @onmessage
       @packets << data
     end
   end
