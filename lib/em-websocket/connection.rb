@@ -115,8 +115,8 @@ module EventMachine
             length = 0
 
             loop do
+              return false unless @data[pointer]
               b = @data[pointer].to_i
-              return false unless b
               pointer += 1
               b_v = b & 0x7F
               length = length * 128 + b_v
