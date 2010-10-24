@@ -161,7 +161,7 @@ describe "WebSocket server draft76" do
       }
       
       client = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-      client.send_data("This is not a HTTP header")
+      client.send_data("This is not a HTTP header\r\n\r\n")
     }
   end
 end
