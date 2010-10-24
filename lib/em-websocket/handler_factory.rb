@@ -8,7 +8,7 @@ module EventMachine
         (header, remains) = data.split("\r\n\r\n", 2)
         unless remains
           # The whole header has not been received yet.
-          return [nil, data]
+          return nil
         end
 
         request = {}
@@ -35,13 +35,21 @@ module EventMachine
         end
 
         version = request['Sec-WebSocket-Key1'] ? 76 : 75
-        if version == 76
+        case version
+        when 75
+          if !remains.empty?
+            raise HandshakeError, "Extra bytes after header"
+          end
+        when 76
           if remains.length < 8
             # The whole third-key has not been received yet.
-            return [nil, data]
+            return nil
+          elsif remains.length > 8
+            raise HandshakeError, "Extra bytes after third key"
           end
-          request['Third-Key'] = remains[0, 8]
-          remains = remains[8..-1]
+          request['Third-Key'] = remains
+        else
+          raise WebSocketError, "Must not happen"
         end
 
         unless request['Connection'] == 'Upgrade' and request['Upgrade'] == 'WebSocket'
@@ -54,13 +62,12 @@ module EventMachine
 
         case version
         when 75
-          handler = Handler75.new(request, response, debug)
+          return Handler75.new(request, response, debug)
         when 76
-          handler = Handler76.new(request, response, debug)
+          return Handler76.new(request, response, debug)
         else
           raise WebSocketError, "Must not happen"
         end
-        return [handler, remains]
       end
     end
   end
