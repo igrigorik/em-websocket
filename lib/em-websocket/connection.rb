@@ -150,7 +150,7 @@ module EventMachine
             end
           else
             # If the high-order bit of the /frame type/ byte is _not_ set
-            msg = @data.slice!(/^\x00([^\xff]*)\xff/)
+            msg = @data.slice!(/\A\x00([^\xff]*)\xff/)
             if msg
               msg.gsub!(/\A\x00|\xff\z/, '')
               if @state == :closing
