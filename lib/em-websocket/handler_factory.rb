@@ -5,10 +5,16 @@ module EventMachine
       HEADER = /^([^:]+):\s*(.+)$/
 
       def self.build(data, secure = false, debug = false)
+        (header, remains) = data.split("\r\n\r\n", 2)
+        unless remains
+          # The whole header has not been received yet.
+          return [nil, data]
+        end
+
         request = {}
         response = nil
 
-        lines = data.split("\r\n")
+        lines = header.split("\r\n")
 
         # extract request path
         first_line = lines.shift.match(PATH)
@@ -27,7 +33,16 @@ module EventMachine
           h = HEADER.match(line)
           request[h[1].strip] = h[2].strip if h
         end
-        request['Third-Key'] = lines.last
+
+        version = request['Sec-WebSocket-Key1'] ? 76 : 75
+        if version == 76
+          if remains.length < 8
+            # The whole third-key has not been received yet.
+            return [nil, data]
+          end
+          request['Third-Key'] = remains[0, 8]
+          remains = remains[8..-1]
+        end
 
         unless request['Connection'] == 'Upgrade' and request['Upgrade'] == 'WebSocket'
           raise HandshakeError, "Connection and Upgrade headers required"
@@ -37,16 +52,15 @@ module EventMachine
         protocol = (secure ? "wss" : "ws")
         request['Host'] = Addressable::URI.parse("#{protocol}://"+request['Host'])
 
-        version = request['Sec-WebSocket-Key1'] ? 76 : 75
-
         case version
         when 75
-          Handler75.new(request, response, debug)
+          handler = Handler75.new(request, response, debug)
         when 76
-          Handler76.new(request, response, debug)
+          handler = Handler76.new(request, response, debug)
         else
           raise WebSocketError, "Must not happen"
         end
+        return [handler, remains]
       end
     end
   end

@@ -37,7 +37,8 @@ module EventMachine
         debug [:receive_data, data]
 
         @data << data
-        dispatch
+        while dispatch
+        end
       end
 
       def unbind
@@ -50,9 +51,9 @@ module EventMachine
       def dispatch
         case @state
           when :handshake
-            handshake
+            return handshake
           when :connected
-            process_message
+            return process_message
           else raise WebSocketError, "invalid state: #{@state}"
         end
       end
@@ -64,8 +65,11 @@ module EventMachine
         else
           debug [:inbound_headers, @data]
           begin
-            @handler = HandlerFactory.build(@data, @secure, @debug)
-            @data = ''
+            (@handler, @data) = HandlerFactory.build(@data, @secure, @debug)
+            unless @handler
+              # The whole header has not been received yet.
+              return false
+            end
             send_data @handler.handshake
 
             @request = @handler.request
