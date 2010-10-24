@@ -164,4 +164,29 @@ describe "WebSocket server draft76" do
       client.send_data("This is not a HTTP header\r\n\r\n")
     }
   end
+
+  it "should handle handshake request split into two TCP packets" do
+    EM.run do
+      EM.add_timer(0.1) do
+        EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
+
+        # Create a fake client which sends draft 76 handshake
+        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+        data = format_request(@request)
+        # Sends first half of the request
+        connection.send_data(data[0...(data.length / 2)])
+
+        connection.onopen = lambda {
+          connection.handshake_response.lines.sort.
+            should == format_response(@response).lines.sort
+          EM.stop
+        }
+
+        EM.add_timer(0.1) do
+          # Sends second half of the request
+          connection.send_data(data[(data.length / 2)..-1])
+        end
+      end
+    end
+  end
 end
