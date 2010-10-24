@@ -58,7 +58,7 @@ module EventMachine
       end
 
       def handshake
-        if @data.match(/<policy-file-request\s*\/>/)
+        if @data.match(/\A<policy-file-request\s*\/>/)
           send_flash_cross_domain_file
           return false
         else
