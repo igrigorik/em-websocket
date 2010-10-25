@@ -115,7 +115,7 @@ module EventMachine
             length = 0
 
             loop do
-              return false unless @data[pointer]
+              return false if !@data[pointer]
               b = @data[pointer].to_i
               pointer += 1
               b_v = b & 0x7F
