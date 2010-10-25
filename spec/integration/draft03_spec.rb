@@ -195,7 +195,7 @@ describe "draft03" do
       end
     end
 
-    it "should not allow data to be sent after close frame sent" do
+    it "should not allow data fraome to be sent after close frame sent" do
       EM.run {
         EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
           ws.onopen {
@@ -208,7 +208,7 @@ describe "draft03" do
             EM.add_timer(0.1) {
               lambda {
                 ws.send('hello world')
-              }.should raise_error('Cannot send more frames since connection is closing')
+              }.should raise_error(EM::WebSocket::WebSocketError, 'Cannot send data frame since connection is closing')
               EM.stop
             }
           }
@@ -217,6 +217,35 @@ describe "draft03" do
         # 1. Create a fake client which sends draft 76 handshake
         connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
         connection.send_data(format_request(@request))
+      }
+    end
+
+    it "should still respond to control frames after close frame sent" do
+      EM.run {
+        EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+          ws.onopen {
+            # 2. Send a close frame
+            EM.next_tick {
+              ws.close_websocket
+            }
+          }
+        }
+
+        # 1. Create a fake client which sends draft 76 handshake
+        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+        connection.send_data(format_request(@request))
+
+        connection.onmessage = lambda { |frame|
+          if frame == "\x01\x00"
+            # 3. After the close frame is received send a ping frame, but
+            # don't respond with a close ack
+            connection.send_data("\x02\x05Hello")
+          else
+            # 4. Check that the pong is received
+            frame.should == "\x03\x05Hello"
+            EM.stop
+          end
+        }
       }
     end
   end

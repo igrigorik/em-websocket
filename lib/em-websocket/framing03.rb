@@ -89,7 +89,9 @@ module EventMachine
       end
       
       def send_frame(frame_type, application_data)
-        raise "Cannot send more frames since connection is closing" if @state == :closing
+        if @state == :closing && data_frame?(frame_type)
+          raise WebSocketError, "Cannot send data frame since connection is closing"
+        end
 
         frame = ''
 
@@ -155,6 +157,8 @@ module EventMachine
         :binary => 5
       }
       FRAME_TYPES_INVERSE = FRAME_TYPES.invert
+      # Frames are either data frames or control frames
+      DATA_FRAMES = [:text, :binary, :continuation]
 
       def type_to_opcode(frame_type)
         FRAME_TYPES[frame_type] || raise("Unknown frame type")
@@ -162,6 +166,10 @@ module EventMachine
 
       def opcode_to_type(opcode)
         FRAME_TYPES_INVERSE[opcode] || raise("Unknown opcode")
+      end
+
+      def data_frame?(type)
+        DATA_FRAMES.include?(type)
       end
     end
   end
