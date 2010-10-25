@@ -65,6 +65,10 @@ module EventMachine
           debug [:inbound_headers, @data]
           begin
             @handler = HandlerFactory.build(@data, @secure, @debug)
+            unless @handler
+              # The whole header has not been received yet.
+              return false
+            end
             @data = ''
             send_data @handler.handshake
 
