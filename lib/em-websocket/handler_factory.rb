@@ -5,9 +5,15 @@ module EventMachine
       HEADER = /^([^:]+):\s*(.+)$/
 
       def self.build(connection, data, secure = false, debug = false)
+        (header, remains) = data.split("\r\n\r\n", 2)
+        unless remains
+          # The whole header has not been received yet.
+          return nil
+        end
+
         request = {}
 
-        lines = data.split("\r\n")
+        lines = header.split("\r\n")
 
         # extract request path
         first_line = lines.shift.match(PATH)
@@ -26,7 +32,24 @@ module EventMachine
           h = HEADER.match(line)
           request[h[1].strip] = h[2].strip if h
         end
-        request['Third-Key'] = lines.last
+
+        version = request['Sec-WebSocket-Key1'] ? 76 : 75
+        case version
+        when 75
+          if !remains.empty?
+            raise HandshakeError, "Extra bytes after header"
+          end
+        when 76
+          if remains.length < 8
+            # The whole third-key has not been received yet.
+            return nil
+          elsif remains.length > 8
+            raise HandshakeError, "Extra bytes after third key"
+          end
+          request['Third-Key'] = remains
+        else
+          raise WebSocketError, "Must not happen"
+        end
 
         unless request['Connection'] == 'Upgrade' and request['Upgrade'] == 'WebSocket'
           raise HandshakeError, "Connection and Upgrade headers required"
@@ -35,8 +58,6 @@ module EventMachine
         # transform headers
         protocol = (secure ? "wss" : "ws")
         request['Host'] = Addressable::URI.parse("#{protocol}://"+request['Host'])
-
-        version = request['Sec-WebSocket-Key1'] ? 76 : 75
 
         if version = request['Sec-WebSocket-Draft']
           if version == '1' || version == '2' || version == '3'

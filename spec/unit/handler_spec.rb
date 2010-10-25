@@ -124,4 +124,16 @@ describe "EventMachine::WebSocket::Handler" do
       }.should raise_error(EM::WebSocket::HandshakeError, 'Websocket Key1 or Key2 does not contain spaces - this is a symptom of a cross-protocol attack')
     end
   end
+
+  it "should leave request with incomplete header" do
+    data = format_request(@request)
+    # Sends only half of the request
+    EM::WebSocket::HandlerFactory.build(mock(EM::WebSocket::Connection), data[0...(data.length / 2)]).should == nil
+  end
+
+  it "should leave request with incomplete third key" do
+    data = format_request(@request)
+    # Removes last two bytes of the third key
+    EM::WebSocket::HandlerFactory.build(mock(EM::WebSocket::Connection), data[0...(data.length - 2)]).should == nil
+  end
 end

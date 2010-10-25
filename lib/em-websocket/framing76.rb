@@ -28,8 +28,8 @@ module EventMachine
             length = 0
 
             loop do
+              return false if !@data[pointer]
               b = @data[pointer].to_i
-              return false unless b
               pointer += 1
               b_v = b & 0x7F
               length = length * 128 + b_v
@@ -63,7 +63,7 @@ module EventMachine
             end
           else
             # If the high-order bit of the /frame type/ byte is _not_ set
-            msg = @data.slice!(/^\x00([^\xff]*)\xff/)
+            msg = @data.slice!(/\A\x00([^\xff]*)\xff/)
             if msg
               msg.gsub!(/\A\x00|\xff\z/, '')
               if @state == :closing
