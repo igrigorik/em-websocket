@@ -49,13 +49,12 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.6}
   s.summary = %q{EventMachine based WebSocket server}
   s.test_files = [
-    "spec/helper.rb",
+     "spec/helper.rb",
      "spec/integration/integration_spec.rb",
      "spec/unit/handler_spec.rb",
      "spec/websocket_spec.rb",
      "examples/echo.rb",
-     "examples/multicast.rb",
-     "examples/srv.rb"
+     "examples/multicast.rb"
   ]
 
   if s.respond_to? :specification_version then
