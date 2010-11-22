@@ -4,7 +4,7 @@ module EventMachine
       PATH   = /^(\w+) (\/[^\s]*) HTTP\/1\.1$/
       HEADER = /^([^:]+):\s*(.+)$/
 
-      def self.build(data, secure = false, debug = false)
+      def self.build(connection, data, secure = false, debug = false)
         (header, remains) = data.split("\r\n\r\n", 2)
         unless remains
           # The whole header has not been received yet.
@@ -12,7 +12,6 @@ module EventMachine
         end
 
         request = {}
-        response = nil
 
         lines = header.split("\r\n")
 
@@ -60,13 +59,18 @@ module EventMachine
         protocol = (secure ? "wss" : "ws")
         request['Host'] = Addressable::URI.parse("#{protocol}://"+request['Host'])
 
-        case version
-        when 75
-          return Handler75.new(request, response, debug)
-        when 76
-          return Handler76.new(request, response, debug)
+        if version = request['Sec-WebSocket-Draft']
+          if version == '1' || version == '2' || version == '3'
+            # We'll use handler03 - I believe they're all compatible
+            Handler03.new(connection, request, debug)
+          else
+            # According to spec should abort the connection
+            raise WebSocketError, "Unknown draft version: #{version}"
+          end
+        elsif request['Sec-WebSocket-Key1']
+          Handler76.new(connection, request, debug)
         else
-          raise WebSocketError, "Must not happen"
+          Handler75.new(connection, request, debug)
         end
       end
     end

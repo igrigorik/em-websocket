@@ -128,12 +128,12 @@ describe "EventMachine::WebSocket::Handler" do
   it "should leave request with incomplete header" do
     data = format_request(@request)
     # Sends only half of the request
-    EM::WebSocket::HandlerFactory.build(data[0...(data.length / 2)]).should == nil
+    EM::WebSocket::HandlerFactory.build(mock(EM::WebSocket::Connection), data[0...(data.length / 2)]).should == nil
   end
 
   it "should leave request with incomplete third key" do
     data = format_request(@request)
     # Removes last two bytes of the third key
-    EM::WebSocket::HandlerFactory.build(data[0...(data.length - 2)]).should == nil
+    EM::WebSocket::HandlerFactory.build(mock(EM::WebSocket::Connection), data[0...(data.length - 2)]).should == nil
   end
 end
