@@ -1,9 +1,9 @@
 require 'bundler'
 Bundler::GemHelper.install_tasks
 
-require 'spec/rake/spectask'
+require 'rspec/core/rake_task'
 
-Spec::Rake::SpecTask.new do |t|
-  t.ruby_opts = ['-rtest/unit']
-  t.spec_files = FileList['spec/**/*_spec.rb']
+RSpec::Core::RakeTask.new do |t|
+  t.rspec_opts = ["-c", "-f progress", "-r ./spec/helper.rb"]
+  t.pattern = 'spec/**/*_spec.rb'
 end

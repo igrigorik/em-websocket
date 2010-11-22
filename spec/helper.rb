@@ -1,9 +1,13 @@
 require 'rubygems'
-require 'spec'
+require 'rspec'
 require 'pp'
 require 'em-http'
 
-require 'lib/em-websocket'
+require 'em-websocket'
+
+Rspec.configure do |c|
+  c.mock_with :rspec
+end
 
 class FakeWebSocketClient < EM::Connection
   attr_writer :onopen, :onclose, :onmessage
@@ -59,8 +63,8 @@ def handler(request, secure = false)
   EM::WebSocket::HandlerFactory.build(connection, format_request(request), secure)
 end
 
-def send_handshake(response)
-  simple_matcher do |given|
-    given.handshake.lines.sort == format_response(response).lines.sort
+RSpec::Matchers.define :send_handshake do |response|
+  match do |actual|
+    actual.handshake.lines.sort == format_response(response).lines.sort
   end
 end
