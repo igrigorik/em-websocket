@@ -7,7 +7,7 @@ module EventMachine
       # js_command is a method that produces json data for a javascript command to be run. 
       # It requires a bit of js code in the browser for it to function.
       # look at the example web_socket_commands.js file
-      # example 
+      # example of websocket server useage in the examples folder
       
       def js_command(method_name, *args)
 
