@@ -4,6 +4,8 @@ module EventMachine
   module WebSocket
     class Connection < EventMachine::Connection
       include Debugger
+      
+      include JSMethods
 
       # define WebSocket callbacks
       def onopen(&blk);     @onopen = blk;    end
