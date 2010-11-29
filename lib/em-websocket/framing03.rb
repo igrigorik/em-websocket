@@ -7,7 +7,7 @@ module EventMachine
         @application_data_buffer = '' # Used for MORE frames
       end
       
-      def process_data
+      def process_data(newdata)
         error = false
 
         while !error && @data.size > 1

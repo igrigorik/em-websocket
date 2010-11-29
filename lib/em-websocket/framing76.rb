@@ -10,7 +10,7 @@ module EventMachine
         @data = ''
       end
       
-      def process_data
+      def process_data(newdata)
         debug [:message, @data]
 
         # This algorithm comes straight from the spec
@@ -19,6 +19,8 @@ module EventMachine
         error = false
 
         while !error
+          return if @data.size == 0
+
           pointer = 0
           frame_type = @data[pointer].to_i
           pointer += 1
@@ -63,7 +65,11 @@ module EventMachine
             end
           else
             # If the high-order bit of the /frame type/ byte is _not_ set
-            msg = @data.slice!(/\A\x00([^\xff]*)\xff/)
+
+            # Optimization to avoid calling slice! unnecessarily
+            error = true and next unless newdata =~ /\xff/
+
+            msg = @data.slice!(/\A\x00[^\xff]*\xff/)
             if msg
               msg.gsub!(/\A\x00|\xff\z/, '')
               if @state == :closing

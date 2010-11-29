@@ -6,7 +6,7 @@ describe EM::WebSocket::Framing03 do
     
     def <<(data)
       @data << data
-      process_data
+      process_data(data)
     end
     
     def debug(*args); end

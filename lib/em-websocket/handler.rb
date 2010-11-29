@@ -25,7 +25,7 @@ module EventMachine
 
       def receive_data(data)
         @data << data
-        process_data
+        process_data(data)
       end
 
       def close_websocket
