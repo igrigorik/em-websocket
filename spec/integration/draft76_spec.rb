@@ -150,6 +150,26 @@ describe "WebSocket server draft76" do
     end
   end
   
+  it "should handle impossible frames by calling onerror callback" do
+    EM.run do
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |server|
+        server.onerror { |error|
+          error.should be_an_instance_of EM::WebSocket::DataError
+          error.message.should == "Invalid frame received"
+          EM.stop
+        }
+      }
+
+      # Create a fake client which sends draft 76 handshake
+      client = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+      client.send_data(format_request(@request))
+
+      client.onopen = lambda {
+        client.send_data("foobar") # Does not start with \x00 or \xff
+      }
+    end
+  end
+
   it "should handle invalid http requests by raising HandshakeError passed to onerror callback" do
     EM.run {
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |server|

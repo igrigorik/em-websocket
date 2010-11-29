@@ -66,6 +66,11 @@ module EventMachine
           else
             # If the high-order bit of the /frame type/ byte is _not_ set
 
+            if @data[0] != 0x00
+              # Close the connection since this buffer can never match
+              @connection.close_with_error(DataError.new("Invalid frame received"))
+            end
+
             # Addition to the spec to protect against malicious requests
             if @data.size > MAXIMUM_FRAME_LENGTH
               @connection.close_with_error(DataError.new("Frame length too long (#{@data.size} bytes)"))
