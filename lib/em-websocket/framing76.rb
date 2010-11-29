@@ -66,6 +66,12 @@ module EventMachine
           else
             # If the high-order bit of the /frame type/ byte is _not_ set
 
+            # Addition to the spec to protect against malicious requests
+            if @data.size > MAXIMUM_FRAME_LENGTH
+              @connection.close_with_error(DataError.new("Frame length too long (#{@data.size} bytes)"))
+              return false
+            end
+
             # Optimization to avoid calling slice! unnecessarily
             error = true and next unless newdata =~ /\xff/
 
