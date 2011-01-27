@@ -14,7 +14,7 @@ module EventMachine
         debug [:message, @data]
 
         # This algorithm comes straight from the spec
-        # http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-76#section-4.2
+        # http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-76#section-5.3
 
         error = false
 
