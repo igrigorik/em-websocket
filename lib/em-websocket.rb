@@ -10,3 +10,11 @@ require "eventmachine"
 ].each do |file|
   require "em-websocket/#{file}"
 end
+
+unless ''.respond_to?(:getbyte)
+  class String
+    def getbyte(i)
+      self[i]
+    end
+  end
+end

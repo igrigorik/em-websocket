@@ -13,19 +13,19 @@ module EventMachine
         while !error && @data.size > 1
           pointer = 0
 
-          more = (@data[pointer] & 0b10000000) == 0b10000000
+          more = (@data.getbyte(pointer) & 0b10000000) == 0b10000000
           # Ignoring rsv1-3 for now
-          opcode = @data[0] & 0b00001111
+          opcode = @data.getbyte(0) & 0b00001111
           pointer += 1
 
           # Ignoring rsv4
-          length = @data[pointer] & 0b01111111
+          length = @data.getbyte(pointer) & 0b01111111
           pointer += 1
 
           payload_length = case length
           when 127 # Length defined by 8 bytes
             # Check buffer size
-            if @data[pointer+8-1] == nil
+            if @data.getbyte(pointer+8-1) == nil
               debug [:buffer_incomplete, @data.inspect]
               error = true
               next
@@ -38,7 +38,7 @@ module EventMachine
             l
           when 126 # Length defined by 2 bytes
             # Check buffer size
-            if @data[pointer+2-1] == nil
+            if @data.getbyte(pointer+2-1) == nil
               debug [:buffer_incomplete, @data.inspect]
               error = true
               next
@@ -52,7 +52,7 @@ module EventMachine
           end
 
           # Check buffer size
-          if @data[pointer+payload_length-1] == nil
+          if @data.getbyte(pointer+payload_length-1) == nil
             debug [:buffer_incomplete, @data.inspect]
             error = true
             next
