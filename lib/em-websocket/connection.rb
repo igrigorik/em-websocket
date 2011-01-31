@@ -26,7 +26,6 @@ module EventMachine
         @debug = options[:debug] || false
         @secure = options[:secure] || false
         @tls_options = options[:tls_options] || {}
-        @request = {}
         @data = ''
 
         debug [:initialize]
