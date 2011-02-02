@@ -1,3 +1,5 @@
+# encoding: BINARY
+
 module EventMachine
   module WebSocket
     module Framing03
