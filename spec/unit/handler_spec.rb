@@ -1,4 +1,4 @@
-require 'spec/helper'
+require 'helper'
 
 describe "EventMachine::WebSocket::Handler" do
   before :each do

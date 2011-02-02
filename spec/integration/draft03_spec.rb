@@ -1,4 +1,4 @@
-require 'spec/helper'
+require 'helper'
 
 describe "draft03" do
   before :each do

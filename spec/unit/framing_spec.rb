@@ -1,4 +1,4 @@
-require 'spec/helper'
+require 'helper'
 
 describe EM::WebSocket::Framing03 do
   class FramingContainer
