@@ -125,6 +125,14 @@ describe "EventMachine::WebSocket::Handler" do
     end
   end
 
+  it "should raise error if spaces do not divide numbers in Sec-WebSocket-Key* " do
+    @request[:headers]['Sec-WebSocket-Key2'] = '12998 5 Y3 1.P00'
+
+    lambda {
+      handler(@request).handshake
+    }.should raise_error(EM::WebSocket::HandshakeError, 'Invalid Key "12998 5 Y3 1.P00"')
+  end
+
   it "should leave request with incomplete header" do
     data = format_request(@request)
     # Sends only half of the request

@@ -48,6 +48,11 @@ module EventMachine
         # As per 5.2.5, abort the connection if spaces are zero.
         raise HandshakeError, "Websocket Key1 or Key2 does not contain spaces - this is a symptom of a cross-protocol attack" if spaces == 0
 
+        # As per 5.2.6, abort if numbers is not an integral multiple of spaces
+        if numbers % spaces != 0
+          raise HandshakeError, "Invalid Key #{string.inspect}"
+        end
+
         quotient = numbers / spaces
 
         return quotient
