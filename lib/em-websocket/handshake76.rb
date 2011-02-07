@@ -55,6 +55,10 @@ module EventMachine
 
         quotient = numbers / spaces
 
+        if quotient > 2**32-1
+          raise HandshakeError, "Challenge computation out of range for key #{string.inspect}"
+        end
+
         return quotient
       end
 
