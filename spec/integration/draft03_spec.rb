@@ -195,7 +195,7 @@ describe "draft03" do
       end
     end
 
-    it "should not allow data fraome to be sent after close frame sent" do
+    it "should not allow data frame to be sent after close frame sent" do
       EM.run {
         EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
           ws.onopen {
