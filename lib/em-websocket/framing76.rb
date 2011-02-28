@@ -1,3 +1,5 @@
+# encoding: BINARY
+
 module EventMachine
   module WebSocket
     module Framing76
@@ -22,7 +24,7 @@ module EventMachine
           return if @data.size == 0
 
           pointer = 0
-          frame_type = @data[pointer].to_i
+          frame_type = @data.getbyte(pointer)
           pointer += 1
 
           if (frame_type & 0x80) == 0x80
@@ -30,8 +32,8 @@ module EventMachine
             length = 0
 
             loop do
-              return false if !@data[pointer]
-              b = @data[pointer].to_i
+              return false if !@data.getbyte(pointer)
+              b = @data.getbyte(pointer)
               pointer += 1
               b_v = b & 0x7F
               length = length * 128 + b_v
@@ -44,7 +46,7 @@ module EventMachine
               return false
             end
 
-            if @data[pointer+length-1] == nil
+            if @data.getbyte(pointer+length-1) == nil
               debug [:buffer_incomplete, @data.inspect]
               # Incomplete data - leave @data to accumulate
               error = true
@@ -66,7 +68,7 @@ module EventMachine
           else
             # If the high-order bit of the /frame type/ byte is _not_ set
 
-            if @data[0] != 0x00
+            if @data.getbyte(0) != 0x00
               # Close the connection since this buffer can never match
               @connection.close_with_error(DataError.new("Invalid frame received"))
             end

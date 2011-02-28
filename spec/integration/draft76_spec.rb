@@ -1,4 +1,4 @@
-require 'spec/helper'
+require 'helper'
 
 describe "WebSocket server draft76" do
   before :each do

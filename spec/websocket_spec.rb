@@ -1,4 +1,4 @@
-require 'spec/helper'
+require 'helper'
 
 describe EventMachine::WebSocket do
 
@@ -153,7 +153,9 @@ describe EventMachine::WebSocket do
 
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen {
-          ws.request["Path"].should == "/?baz=qux&foo=bar"
+          path, query = ws.request["Path"].split('?')
+          path.should == '/'
+          Hash[*query.split(/&|=/)].should == {"foo"=>"bar", "baz"=>"qux"}
           ws.request["Query"]["foo"].should == "bar"
           ws.request["Query"]["baz"].should == "qux"
         }
