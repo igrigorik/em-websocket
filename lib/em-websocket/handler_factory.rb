@@ -33,13 +33,26 @@ module EventMachine
           request[h[1].strip.downcase] = h[2].strip if h
         end
 
-        version = request['sec-websocket-key1'] ? 76 : 75
+        # Determine version heuristically
+        version = if request['sec-websocket-version']
+          # Used from drafts 04 onwards
+          request['sec-websocket-version'].to_i
+        elsif request['sec-websocket-draft']
+          # Used in drafts 01 - 03
+          request['sec-websocket-draft'].to_i
+        elsif request['sec-websocket-key1']
+          76
+        else
+          75
+        end
+
+        # Additional handling of bytes after the header if required
         case version
         when 75
           if !remains.empty?
             raise HandshakeError, "Extra bytes after header"
           end
-        when 76
+        when 76, 1..3
           if remains.length < 8
             # The whole third-key has not been received yet.
             return nil
@@ -47,8 +60,6 @@ module EventMachine
             raise HandshakeError, "Extra bytes after third key"
           end
           request['third-key'] = remains
-        else
-          raise WebSocketError, "Must not happen"
         end
 
         unless request['connection'] == 'Upgrade' and request['upgrade'] == 'WebSocket'
@@ -59,18 +70,17 @@ module EventMachine
         protocol = (secure ? "wss" : "ws")
         request['host'] = Addressable::URI.parse("#{protocol}://"+request['host'])
 
-        if version = request['sec-websocket-draft']
-          if version == '1' || version == '2' || version == '3'
-            # We'll use handler03 - I believe they're all compatible
-            Handler03.new(connection, request, debug)
-          else
-            # According to spec should abort the connection
-            raise WebSocketError, "Unknown draft version: #{version}"
-          end
-        elsif request['sec-websocket-key1']
-          Handler76.new(connection, request, debug)
-        else
+        case version
+        when 75
           Handler75.new(connection, request, debug)
+        when 76
+          Handler76.new(connection, request, debug)
+        when 1..3
+          # We'll use handler03 - I believe they're all compatible
+          Handler03.new(connection, request, debug)
+        else
+          # According to spec should abort the connection
+          raise WebSocketError, "Protocol version #{version} not supported"
         end
       end
     end
