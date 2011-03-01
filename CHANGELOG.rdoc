@@ -1,5 +1,21 @@
 = Changelog
 
+== 0.2.1 / 2011-03-01
+
+- bugfixes:
+  - Performance improvements to draft 76 framing
+  - Limit frame lengths for draft 76
+  - Better error handling for draft 76 handshake
+  - Ruby 1.9 support
+
+== 0.2.0 / 2010-11-23
+
+- new features:
+  - Support for WebSocket draft 03
+- bugfixes:
+  - Handle case when handshake split into two receive_data calls
+  - Stricter regexp matching of frames
+
 == 0.1.4 / 2010-08-23
 
 - new features:
