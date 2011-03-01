@@ -62,7 +62,7 @@ module EventMachine
           request['third-key'] = remains
         end
 
-        unless request['connection'] == 'Upgrade' and request['upgrade'] == 'WebSocket'
+        unless request['connection'] && request['connection'] == 'Upgrade' && request['upgrade'] && request['upgrade'].downcase == 'websocket'
           raise HandshakeError, "Connection and Upgrade headers required"
         end
 
