@@ -124,12 +124,12 @@ describe EventMachine::WebSocket do
 
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen {
-          ws.request["User-Agent"].should == "EventMachine HttpClient"
-          ws.request["Connection"].should == "Upgrade"
-          ws.request["Upgrade"].should == "WebSocket"
-          ws.request["Path"].should == "/"
-          ws.request["Origin"].should == "127.0.0.1"
-          ws.request["Host"].to_s.should == "ws://127.0.0.1:12345"
+          ws.request["user-agent"].should == "EventMachine HttpClient"
+          ws.request["connection"].should == "Upgrade"
+          ws.request["upgrade"].should == "WebSocket"
+          ws.request["path"].should == "/"
+          ws.request["origin"].should == "127.0.0.1"
+          ws.request["host"].to_s.should == "ws://127.0.0.1:12345"
         }
         ws.onclose {
           ws.state.should == :closed
@@ -153,11 +153,11 @@ describe EventMachine::WebSocket do
 
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen {
-          path, query = ws.request["Path"].split('?')
+          path, query = ws.request["path"].split('?')
           path.should == '/'
           Hash[*query.split(/&|=/)].should == {"foo"=>"bar", "baz"=>"qux"}
-          ws.request["Query"]["foo"].should == "bar"
-          ws.request["Query"]["baz"].should == "qux"
+          ws.request["query"]["foo"].should == "bar"
+          ws.request["query"]["baz"].should == "qux"
         }
         ws.onclose {
           ws.state.should == :closed
@@ -181,8 +181,8 @@ describe EventMachine::WebSocket do
 
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen {
-          ws.request["Path"].should == "/"
-          ws.request["Query"].should == {}
+          ws.request["path"].should == "/"
+          ws.request["query"].should == {}
         }
         ws.onclose {
           ws.state.should == :closed
