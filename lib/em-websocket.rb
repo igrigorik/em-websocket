@@ -4,9 +4,9 @@ require "eventmachine"
 
 %w[
   debugger websocket connection
-  handshake75 handshake76
+  handshake75 handshake76 handshake04
   framing76 framing03
-  handler_factory handler handler75 handler76 handler03
+  handler_factory handler handler75 handler76 handler03 handler05
 ].each do |file|
   require "em-websocket/#{file}"
 end

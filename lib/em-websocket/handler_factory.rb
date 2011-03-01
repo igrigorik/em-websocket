@@ -62,6 +62,7 @@ module EventMachine
           request['third-key'] = remains
         end
 
+        # Validate that Connection and Upgrade headers
         unless request['connection'] && request['connection'] =~ /Upgrade/ && request['upgrade'] && request['upgrade'].downcase == 'websocket'
           raise HandshakeError, "Connection and Upgrade headers required"
         end
@@ -78,6 +79,8 @@ module EventMachine
         when 1..3
           # We'll use handler03 - I believe they're all compatible
           Handler03.new(connection, request, debug)
+        when 5
+          Handler05.new(connection, request, debug)
         else
           # According to spec should abort the connection
           raise WebSocketError, "Protocol version #{version} not supported"
