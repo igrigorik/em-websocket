@@ -3,7 +3,7 @@
 module EventMachine
   module WebSocket
     module Framing03
-      
+
       def initialize_framing
         @data = ''
         @application_data_buffer = '' # Used for MORE frames
@@ -15,7 +15,7 @@ module EventMachine
         while !error && @data.size > 1
           pointer = 0
 
-          more = (@data.getbyte(pointer) & 0b10000000) == 0b10000000
+          more = ((@data.getbyte(pointer) & 0b10000000) == 0b10000000) ^ fin
           # Ignoring rsv1-3 for now
           opcode = @data.getbyte(0) & 0b00001111
           pointer += 1
@@ -123,6 +123,9 @@ module EventMachine
       end
 
       private
+
+      # This allows flipping the more bit to fin for draft 04
+      def fin; false; end
 
       def message(message_type, extension_data, application_data)
         case message_type

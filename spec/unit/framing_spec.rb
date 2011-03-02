@@ -106,3 +106,58 @@ describe EM::WebSocket::Framing03 do
     end
   end
 end
+
+# These examples are straight from the spec
+# http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-03#section-4.6
+describe EM::WebSocket::Framing04 do
+  class FramingContainer04
+    include EM::WebSocket::Framing04
+
+    def <<(data)
+      @data << data
+      process_data(data)
+    end
+
+    def debug(*args); end
+  end
+
+  before :each do
+    @f = FramingContainer04.new
+    @f.initialize_framing
+  end
+
+  describe "examples from the spec" do
+    it "a single-frame text message" do
+      @f.should_receive(:message).with(:text, '', 'Hello')
+      @f << "\x84\x05\x48\x65\x6c\x6c\x6f" # "\x84\x05Hello"
+    end
+
+    it "a fragmented text message" do
+      @f.should_receive(:message).with(:text, '', 'Hello')
+      @f << "\x04\x03Hel"
+      @f << "\x80\x02lo"
+    end
+
+    it "Ping request" do
+      @f.should_receive(:message).with(:ping, '', 'Hello')
+      @f << "\x82\x05Hello"
+    end
+
+    it "a pong response" do
+      @f.should_receive(:message).with(:pong, '', 'Hello')
+      @f << "\x83\x05Hello"
+    end
+
+    it "256 bytes binary message in a single frame" do
+      data = "a"*256
+      @f.should_receive(:message).with(:binary, '', data)
+      @f << "\x85\x7E\x01\x00" + data
+    end
+
+    it "64KiB binary message in a single frame" do
+      data = "a"*65536
+      @f.should_receive(:message).with(:binary, '', data)
+      @f << "\x85\x7F\x00\x00\x00\x00\x00\x01\x00\x00" + data
+    end
+  end
+end
