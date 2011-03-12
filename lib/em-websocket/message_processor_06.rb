@@ -2,7 +2,7 @@ module EventMachine
   module WebSocket
     module MessageProcessor06
       def message(message_type, extension_data, application_data)
-        debug :message_received, message_type, application_data
+        debug [:message_received, message_type, application_data]
         
         case message_type
         when :close
@@ -17,7 +17,7 @@ module EventMachine
             application_data.slice!(0, 2).unpack('n').first
           end
           
-          debug :close_frame_received, status_code, application_data
+          debug [:close_frame_received, status_code, application_data]
           
           if @state == :closing
             # We can close connection immediately since there is no more data
