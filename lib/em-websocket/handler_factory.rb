@@ -33,6 +33,10 @@ module EventMachine
           request[h[1].strip] = h[2].strip if h
         end
 
+        build_with_request(connection, request, remains, secure, debug)
+      end
+
+      def self.build_with_request(connection, request, remains, secure = false, debug = false)
         version = request['Sec-WebSocket-Key1'] ? 76 : 75
         case version
         when 75
