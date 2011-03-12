@@ -6,7 +6,7 @@ module EventMachine
       include MessageProcessor03
 
       def close_websocket(code, body)
-        # TODO: Should we send data and check the response matches?
+        # TODO: Ideally send body data and check that it matches in ack
         send_frame(:close, '')
         @state = :closing
       end
