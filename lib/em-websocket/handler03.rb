@@ -5,7 +5,7 @@ module EventMachine
       include Framing03
       include MessageProcessor03
 
-      def close_websocket
+      def close_websocket(code, body)
         # TODO: Should we send data and check the response matches?
         send_frame(:close, '')
         @state = :closing

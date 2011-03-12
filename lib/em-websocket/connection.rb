@@ -34,9 +34,9 @@ module EventMachine
       # Use this method to close the websocket connection cleanly
       # This sends a close frame and waits for acknowlegement before closing
       # the connection
-      def close_websocket
+      def close_websocket(code = nil, body = nil)
         if @handler
-          @handler.close_websocket
+          @handler.close_websocket(code, body)
         else
           # The handshake hasn't completed - should be safe to terminate
           close_connection

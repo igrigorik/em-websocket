@@ -28,7 +28,7 @@ module EventMachine
         process_data(data)
       end
 
-      def close_websocket
+      def close_websocket(code, body)
         # Unless redefined in a subclass, just close the connection
         @state = :closed
         @connection.close_connection_after_writing
