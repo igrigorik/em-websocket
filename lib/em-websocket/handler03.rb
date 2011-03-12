@@ -3,6 +3,7 @@ module EventMachine
     class Handler03 < Handler
       include Handshake76
       include Framing03
+      include MessageProcessor03
 
       def close_websocket
         # TODO: Should we send data and check the response matches?
