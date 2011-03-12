@@ -91,6 +91,8 @@ module EventMachine
       end
       
       def send_frame(frame_type, application_data)
+        debug [:sending_frame, frame_type, application_data]
+
         if @state == :closing && data_frame?(frame_type)
           raise WebSocketError, "Cannot send data frame since connection is closing"
         end

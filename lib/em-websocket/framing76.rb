@@ -105,6 +105,7 @@ module EventMachine
       # byte to a value betweent 0x80 and 0xFF, followed by
       # a leading length indicator
       def send_text_frame(data)
+        debug [:sending_text_frame, data]
         ary = ["\x00", data, "\xff"]
         ary.collect{ |s| s.force_encoding('UTF-8') if s.respond_to?(:force_encoding) }
         @connection.send_data(ary.join)

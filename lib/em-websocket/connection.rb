@@ -105,8 +105,6 @@ module EventMachine
       end
 
       def send(data)
-        debug [:send, data]
-
         if @handler
           @handler.send_text_frame(data)
         else
