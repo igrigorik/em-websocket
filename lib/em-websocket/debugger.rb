@@ -5,7 +5,8 @@ module EventMachine
       private
 
       def debug(*data)
-        if @debug
+        data.flatten!
+        if @debug || data.first == :error
           require 'pp'
           pp data
           puts
