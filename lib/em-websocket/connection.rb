@@ -35,11 +35,19 @@ module EventMachine
       # This sends a close frame and waits for acknowlegement before closing
       # the connection
       def close_websocket(code = nil, body = nil)
+        if code && !(4000..4999).include?(code)
+          raise "Application code may only use codes in the range 4000-4999"
+        end
+
+        # If code not defined then set to 1000 (normal closure)
+        code ||= 1000
+
         if @handler
+          debug [:closing, code]
           @handler.close_websocket(code, body)
         else
           # The handshake hasn't completed - should be safe to terminate
-          close_connection
+          abort
         end
       end
 
@@ -123,6 +131,14 @@ module EventMachine
 
       def state
         @handler ? @handler.state : :handshake
+      end
+
+      private
+
+      # As definited in draft 06 7.2.2, some failures require that the server
+      # abort the websocket connection rather than close cleanly
+      def abort
+        close_connection
       end
     end
   end
