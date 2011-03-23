@@ -29,9 +29,7 @@ module EventMachine
       end
 
       def close_websocket(code, body)
-        # Unless redefined in a subclass, just close the connection
-        @state = :closed
-        @connection.close_connection_after_writing
+        # Implemented in subclass
       end
 
       def unbind

@@ -4,20 +4,7 @@ module EventMachine
       include Handshake04
       include Framing05
       include MessageProcessor06
-      
-      def close_websocket(code, body)
-        if code
-          unless (4000..4999).include?(code)
-            raise "Application code may only use codes in the range 4000-4999"
-          end
-          close_data = [code].pack('n')
-          close_data << body
-          send_frame(:close, close_data)
-        else
-          send_frame(:close, '')
-        end
-        @state = :closing
-      end
+      include Close06
     end
   end
 end
