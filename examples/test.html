@@ -1,26 +1,29 @@
 <html>
   <head>
-    <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js'></script>
     <script src='js/swfobject.js'></script>
     <script src='js/FABridge.js'></script>
     <script src='js/web_socket.js'></script>
     <script>
-      $(document).ready(function(){
-        function debug(str){ $("#debug").append("<p>" +  str); };
+      function init() {
+        function debug(string) {
+          var element = document.getElementById("debug");
+          var p = document.createElement("p");
+          p.appendChild(document.createTextNode(string));
+          element.appendChild(p);
+        }
 
         ws = new WebSocket("ws://localhost:8080/");
-        ws.onmessage = function(evt) { $("#msg").append("<p>"+evt.data+"</p>"); };
+        ws.onmessage = function(evt) { debug("Message: " + evt.data); };
         ws.onclose = function() { debug("socket closed"); };
         ws.onopen = function() {
           debug("connected...");
           ws.send("hello server");
           ws.send("hello again");
         };
-      });
+      };
     </script>
   </head>
-  <body>
+  <body onload="init();">
     <div id="debug"></div>
-    <div id="msg"></div>
   </body>
 </html>
