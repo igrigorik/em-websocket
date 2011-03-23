@@ -46,11 +46,8 @@ describe "WebSocket server draft75" do
     EM.run do
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('http://127.0.0.1:12345/').get :timeout => 0
-        http.errback { failed }
-        http.callback {
-          http.response_header.status.should == 400
-          EventMachine.stop
-        }
+        http.errback { EM.stop }
+        http.callback { failed }
       end
 
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) {}
