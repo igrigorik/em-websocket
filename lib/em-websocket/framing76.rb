@@ -47,7 +47,7 @@ module EventMachine
             end
 
             if @data.getbyte(pointer+length-1) == nil
-              debug [:buffer_incomplete, @data.inspect]
+              debug [:buffer_incomplete, @data]
               # Incomplete data - leave @data to accumulate
               error = true
             else

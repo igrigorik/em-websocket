@@ -30,7 +30,7 @@ module EventMachine
           when 127 # Length defined by 8 bytes
             # Check buffer size
             if @data.getbyte(pointer+8-1) == nil
-              debug [:buffer_incomplete, @data.inspect]
+              debug [:buffer_incomplete, @data]
               error = true
               next
             end
@@ -43,7 +43,7 @@ module EventMachine
           when 126 # Length defined by 2 bytes
             # Check buffer size
             if @data.getbyte(pointer+2-1) == nil
-              debug [:buffer_incomplete, @data.inspect]
+              debug [:buffer_incomplete, @data]
               error = true
               next
             end
@@ -57,7 +57,7 @@ module EventMachine
 
           # Check buffer size
           if @data.getbyte(pointer+payload_length-1) == nil
-            debug [:buffer_incomplete, @data.inspect]
+            debug [:buffer_incomplete, @data]
             error = true
             next
           end
