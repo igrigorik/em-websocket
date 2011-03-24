@@ -36,4 +36,27 @@ shared_examples_for "a websocket server" do
       }
     }
   end
+
+  it "should call onerror in an application error raised in onclose" do
+    EM.run {
+      start_server { |server|
+        server.onclose {
+          raise "application error"
+        }
+
+        server.onerror { |e|
+          e.message.should == "application error"
+          EM.stop
+        }
+      }
+
+      start_client { |client|
+        client.onopen {
+          EM.add_timer(0.1) {
+            client.close_connection
+          }
+        }
+      }
+    }
+  end
 end

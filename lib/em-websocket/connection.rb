@@ -79,6 +79,10 @@ module EventMachine
         debug [:unbind, :connection]
 
         @handler.unbind if @handler
+      rescue => e
+        debug [:error, e]
+        # These are application errors - raise unless onerror defined
+        @onerror ? @onerror.call(e) : raise(e)
       end
 
       def dispatch(data)

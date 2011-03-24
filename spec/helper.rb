@@ -85,6 +85,10 @@ class Draft75WebSocketClient
   def send(message)
     @ws.send(message)
   end
+
+  def close_connection
+    @ws.close_connection
+  end
 end
 
 def failed
