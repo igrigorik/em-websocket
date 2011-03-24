@@ -1,6 +1,10 @@
 require 'helper'
 
-describe EventMachine::WebSocket do
+# These integration tests are older and use a different testing style to the 
+# integration tests for newer drafts. They use EM::HttpRequest which happens 
+# to currently estabish a websocket connection using the draft75 protocol.
+# 
+describe "WebSocket server draft75" do
 
   it "should automatically complete WebSocket handshake" do
     EM.run do
