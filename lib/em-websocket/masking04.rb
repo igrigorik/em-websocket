@@ -11,7 +11,8 @@ module EventMachine
       end
 
       def getbyte(index)
-        super(index + 4) ^ @masking_key.getbyte(index % 4)
+        masked_char = super(index + 4)
+        masked_char ? masked_char ^ @masking_key.getbyte(index % 4) : nil
       end
 
       def getbytes(start_index, count)
