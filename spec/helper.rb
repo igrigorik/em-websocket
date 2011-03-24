@@ -104,7 +104,7 @@ def format_request(r)
 end
 
 def format_response(r)
-  data = "HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
+  data = r[:protocol] || "HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
   header_lines = r[:headers].map { |k,v| "#{k}: #{v}" }
   data << [header_lines, '', r[:body]].join("\r\n")
   data
