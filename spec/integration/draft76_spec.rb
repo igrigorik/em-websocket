@@ -1,4 +1,5 @@
 require 'helper'
+require 'integration/shared_examples'
 
 describe "WebSocket server draft76" do
   before :each do
@@ -30,6 +31,20 @@ describe "WebSocket server draft76" do
     }
   end
   
+  it_behaves_like "a websocket server" do
+    def start_server
+      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+        yield ws
+      }
+    end
+
+    def start_client
+      client = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+      client.send_data(format_request(@request))
+      yield client if block_given?
+    end
+  end
+
   it "should send back the correct handshake response" do
     EM.run do
       EM.add_timer(0.1) do
@@ -39,7 +54,7 @@ describe "WebSocket server draft76" do
         connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
         connection.send_data(format_request(@request))
         
-        connection.onopen = lambda {
+        connection.onopen {
           connection.handshake_response.lines.sort.
             should == format_response(@response).lines.sort
           EM.stop
@@ -58,13 +73,13 @@ describe "WebSocket server draft76" do
         connection.send_data(format_request(@request))
   
         # Send closing frame after handshake complete
-        connection.onopen = lambda {
+        connection.onopen {
           connection.send_data(EM::WebSocket::Handler76::TERMINATE_STRING)
         }
   
         # Check that this causes a termination string to be returned and the 
         # connection close
-        connection.onclose = lambda {
+        connection.onclose {
           connection.packets[0].should == 
             EM::WebSocket::Handler76::TERMINATE_STRING
           EM.stop
@@ -88,12 +103,12 @@ describe "WebSocket server draft76" do
         connection.send_data(format_request(@request))
   
         # Send closing frame after handshake complete, followed by another msg
-        connection.onopen = lambda {
+        connection.onopen {
           connection.send_data(EM::WebSocket::Handler76::TERMINATE_STRING)
           connection.send('foobar')
         }
   
-        connection.onclose = lambda {
+        connection.onclose {
           EM.stop
         }
       end
@@ -114,12 +129,12 @@ describe "WebSocket server draft76" do
         connection.send_data(format_request(@request))
   
         # Send closing frame after handshake complete
-        connection.onopen = lambda {
+        connection.onopen {
           connection.send_data("\000\n\000\377")
           connection.send_data(EM::WebSocket::Handler76::TERMINATE_STRING)
         }
   
-        connection.onclose = lambda {
+        connection.onclose {
           EM.stop
         }
       end
@@ -144,7 +159,7 @@ describe "WebSocket server draft76" do
       # 1180591620717411303296 bytes. Such a message would previously cause
       # a "bignum too big to convert into `long'" error.
       # However it is clearly unreasonable and should be rejected.
-      client.onopen = lambda {
+      client.onopen {
         client.send_data("\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00")
       }
     end
@@ -164,7 +179,7 @@ describe "WebSocket server draft76" do
       client = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
       client.send_data(format_request(@request))
 
-      client.onopen = lambda {
+      client.onopen {
         client.send_data("foobar") # Does not start with \x00 or \xff
       }
     end
@@ -196,7 +211,7 @@ describe "WebSocket server draft76" do
         # Sends first half of the request
         connection.send_data(data[0...(data.length / 2)])
 
-        connection.onopen = lambda {
+        connection.onopen {
           connection.handshake_response.lines.sort.
             should == format_response(@response).lines.sort
           EM.stop
