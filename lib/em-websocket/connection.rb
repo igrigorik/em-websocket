@@ -20,6 +20,9 @@ module EventMachine
       def trigger_on_close
         @onclose.call if @onclose
       end
+      def trigger_on_error(reason)
+        @onerror.call(reason) if @onerror
+      end
 
       def initialize(options)
         @options = options
