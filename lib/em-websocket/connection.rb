@@ -122,11 +122,6 @@ module EventMachine
         end
       end
 
-      def close_with_error(message)
-        @onerror.call(message) if @onerror
-        close_connection_after_writing
-      end
-
       def request
         @handler ? @handler.request : {}
       end
