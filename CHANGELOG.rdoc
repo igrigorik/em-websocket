@@ -1,5 +1,15 @@
 = Changelog
 
+== 0.3.0
+
+- new features:
+  - Support WebSocket drafts 05 & 06
+- changes:
+  - Accept request headers in a case insensitive manner
+  - Change handling of errors. Previously some application errors were caught
+    internally and were invisible unless an onerror callback was supplied. See
+    readme for details
+
 == 0.2.1 / 2011-03-01
 
 - bugfixes:

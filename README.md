@@ -42,6 +42,22 @@ For example,
     ...
     end
 
+## Handling errors
+
+There are two kinds of errors that need to be handled - errors caused by incompatible WebSocket clients sending invalid data and errors in application code. They are handled as follows:
+
+Errors caused by invalid WebSocket data (for example invalid errors in the WebSocket handshake or invalid message frames) raise errors which descend from `EventMachine::WebSocket::WebSocketError`. Such errors are rescued internally and the WebSocket connection will be closed immediately or an error code sent to the browser in accordance to the WebSocket specification. However it is possible to be notified in application code on such errors by including an `onerror` callback.
+
+    ws.onerror { |error|
+      if e.kind_of?(EM::WebSocket::WebSocketError)
+        ...
+      end
+    }
+
+Application errors are treated differently. If no `onerror` callback has been defined these errors will propagate to the EventMachine reactor, typically causing your program to terminate. If you wish to handle exceptions, simply supply an `onerror callback` and check for exceptions which are not decendant from `EventMachine::WebSocket::WebSocketError`.
+
+It is also possible to log all errors when developing by including the `:debug => true` option when initialising the WebSocket connection.
+
 ## Examples & Projects using em-websocket
 
 * [Pusher](http://pusherapp.com) - Realtime client push
