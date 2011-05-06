@@ -1,6 +1,6 @@
 = Changelog
 
-== 0.3.0
+== 0.3.0 / 2011-05-06
 
 - new features:
   - Support WebSocket drafts 05 & 06
