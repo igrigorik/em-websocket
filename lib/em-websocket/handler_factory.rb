@@ -33,6 +33,10 @@ module EventMachine
           request[h[1].strip.downcase] = h[2].strip if h
         end
 
+        build_with_request(connection, request, remains, secure, debug)
+      end
+
+      def self.build_with_request(connection, request, remains, secure = false, debug = false)
         # Determine version heuristically
         version = if request['sec-websocket-version']
           # Used from drafts 04 onwards
