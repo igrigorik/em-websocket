@@ -18,59 +18,74 @@ module EventMachine
         # extract request path
         first_line = lines.shift.match(PATH)
         raise HandshakeError, "Invalid HTTP header" unless first_line
-        request['Method'] = first_line[1].strip
-        request['Path'] = first_line[2].strip
+        request['method'] = first_line[1].strip
+        request['path'] = first_line[2].strip
 
-        unless request["Method"] == "GET"
+        unless request["method"] == "GET"
           raise HandshakeError, "Must be GET request"
         end
 
         # extract query string values
-        request['Query'] = Addressable::URI.parse(request['Path']).query_values ||= {}
+        request['query'] = Addressable::URI.parse(request['path']).query_values ||= {}
         # extract remaining headers
         lines.each do |line|
           h = HEADER.match(line)
-          request[h[1].strip] = h[2].strip if h
+          request[h[1].strip.downcase] = h[2].strip if h
         end
 
-        version = request['Sec-WebSocket-Key1'] ? 76 : 75
+        # Determine version heuristically
+        version = if request['sec-websocket-version']
+          # Used from drafts 04 onwards
+          request['sec-websocket-version'].to_i
+        elsif request['sec-websocket-draft']
+          # Used in drafts 01 - 03
+          request['sec-websocket-draft'].to_i
+        elsif request['sec-websocket-key1']
+          76
+        else
+          75
+        end
+
+        # Additional handling of bytes after the header if required
         case version
         when 75
           if !remains.empty?
             raise HandshakeError, "Extra bytes after header"
           end
-        when 76
+        when 76, 1..3
           if remains.length < 8
             # The whole third-key has not been received yet.
             return nil
           elsif remains.length > 8
             raise HandshakeError, "Extra bytes after third key"
           end
-          request['Third-Key'] = remains
-        else
-          raise WebSocketError, "Must not happen"
+          request['third-key'] = remains
         end
 
-        unless request['Connection'] == 'Upgrade' and request['Upgrade'] == 'WebSocket'
+        # Validate that Connection and Upgrade headers
+        unless request['connection'] && request['connection'] =~ /Upgrade/ && request['upgrade'] && request['upgrade'].downcase == 'websocket'
           raise HandshakeError, "Connection and Upgrade headers required"
         end
 
         # transform headers
         protocol = (secure ? "wss" : "ws")
-        request['Host'] = Addressable::URI.parse("#{protocol}://"+request['Host'])
+        request['host'] = Addressable::URI.parse("#{protocol}://"+request['host'])
 
-        if version = request['Sec-WebSocket-Draft']
-          if version == '1' || version == '2' || version == '3'
-            # We'll use handler03 - I believe they're all compatible
-            Handler03.new(connection, request, debug)
-          else
-            # According to spec should abort the connection
-            raise WebSocketError, "Unknown draft version: #{version}"
-          end
-        elsif request['Sec-WebSocket-Key1']
-          Handler76.new(connection, request, debug)
-        else
+        case version
+        when 75
           Handler75.new(connection, request, debug)
+        when 76
+          Handler76.new(connection, request, debug)
+        when 1..3
+          # We'll use handler03 - I believe they're all compatible
+          Handler03.new(connection, request, debug)
+        when 5
+          Handler05.new(connection, request, debug)
+        when 6
+          Handler06.new(connection, request, debug)
+        else
+          # According to spec should abort the connection
+          raise WebSocketError, "Protocol version #{version} not supported"
         end
       end
     end

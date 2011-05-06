@@ -2,22 +2,24 @@
 
 module EventMachine
   module WebSocket
-    module Framing03
-
+    module Framing05
+      
       def initialize_framing
-        @data = ''
+        @data = MaskedString.new
         @application_data_buffer = '' # Used for MORE frames
       end
       
       def process_data(newdata)
         error = false
 
-        while !error && @data.size > 1
+        while !error && @data.size > 5 # mask plus first byte present
           pointer = 0
 
-          more = ((@data.getbyte(pointer) & 0b10000000) == 0b10000000) ^ fin
+          @data.read_mask
+
+          fin = (@data.getbyte(pointer) & 0b10000000) == 0b10000000
           # Ignoring rsv1-3 for now
-          opcode = @data.getbyte(0) & 0b00001111
+          opcode = @data.getbyte(pointer) & 0b00001111
           pointer += 1
 
           # Ignoring rsv4
@@ -35,7 +37,7 @@ module EventMachine
             
             # Only using the last 4 bytes for now, till I work out how to
             # unpack 8 bytes. I'm sure 4GB frames will do for now :)
-            l = @data[(pointer+4)..(pointer+7)].unpack('N').first
+            l = @data.getbytes(pointer+4, 4).unpack('N').first
             pointer += 8
             l
           when 126 # Length defined by 2 bytes
@@ -46,7 +48,7 @@ module EventMachine
               next
             end
             
-            l = @data[pointer..(pointer+1)].unpack('n').first
+            l = @data.getbytes(pointer, 2).unpack('n').first
             pointer += 2
             l
           else
@@ -60,11 +62,12 @@ module EventMachine
             next
           end
 
-          # Throw away data up to pointer
-          @data.slice!(0...pointer)
-
           # Read application data
-          application_data = @data.slice!(0...payload_length)
+          application_data = @data.getbytes(pointer, payload_length)
+          pointer += payload_length
+          
+          # Throw away data up to pointer
+          @data.slice!(0...(pointer + 4))
 
           frame_type = opcode_to_type(opcode)
 
@@ -72,7 +75,7 @@ module EventMachine
             raise WebSocketError, 'Continuation frame not expected'
           end
 
-          if more
+          if !fin
             debug [:moreframe, frame_type, application_data]
             @application_data_buffer << application_data
             @frame_type = frame_type
@@ -100,7 +103,7 @@ module EventMachine
         frame = ''
 
         opcode = type_to_opcode(frame_type)
-        byte1 = opcode # since more, rsv1-3 are 0
+        byte1 = opcode | 0b10000000 # fin bit set, rsv1-3 are 0
         frame << byte1
 
         length = application_data.size
@@ -125,9 +128,6 @@ module EventMachine
       end
 
       private
-
-      # This allows flipping the more bit to fin for draft 04
-      def fin; false; end
 
       FRAME_TYPES = {
         :continuation => 0,

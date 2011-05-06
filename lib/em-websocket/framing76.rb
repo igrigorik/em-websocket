@@ -42,12 +42,11 @@ module EventMachine
 
             # Addition to the spec to protect against malicious requests
             if length > MAXIMUM_FRAME_LENGTH
-              @connection.close_with_error(DataError.new("Frame length too long (#{length} bytes)"))
-              return false
+              raise DataError, "Frame length too long (#{length} bytes)"
             end
 
             if @data.getbyte(pointer+length-1) == nil
-              debug [:buffer_incomplete, @data.inspect]
+              debug [:buffer_incomplete, @data]
               # Incomplete data - leave @data to accumulate
               error = true
             else
@@ -70,13 +69,12 @@ module EventMachine
 
             if @data.getbyte(0) != 0x00
               # Close the connection since this buffer can never match
-              @connection.close_with_error(DataError.new("Invalid frame received"))
+              raise DataError, "Invalid frame received"
             end
 
             # Addition to the spec to protect against malicious requests
             if @data.size > MAXIMUM_FRAME_LENGTH
-              @connection.close_with_error(DataError.new("Frame length too long (#{@data.size} bytes)"))
-              return false
+              raise DataError, "Frame length too long (#{@data.size} bytes)"
             end
 
             # Optimization to avoid calling slice! unnecessarily
@@ -105,6 +103,7 @@ module EventMachine
       # byte to a value betweent 0x80 and 0xFF, followed by
       # a leading length indicator
       def send_text_frame(data)
+        debug [:sending_text_frame, data]
         ary = ["\x00", data, "\xff"]
         ary.collect{ |s| s.force_encoding('UTF-8') if s.respond_to?(:force_encoding) }
         @connection.send_data(ary.join)

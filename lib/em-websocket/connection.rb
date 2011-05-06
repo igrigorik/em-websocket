@@ -34,13 +34,15 @@ module EventMachine
       # Use this method to close the websocket connection cleanly
       # This sends a close frame and waits for acknowlegement before closing
       # the connection
-      def close_websocket
-        if @handler
-          @handler.close_websocket
-        else
-          # The handshake hasn't completed - should be safe to terminate
-          close_connection
+      def close_websocket(code = nil, body = nil)
+        if code && !(4000..4999).include?(code)
+          raise "Application code may only use codes in the range 4000-4999"
         end
+
+        # If code not defined then set to 1000 (normal closure)
+        code ||= 1000
+
+        close_websocket_private(code, body)
       end
 
       def post_init
@@ -55,12 +57,32 @@ module EventMachine
         else
           dispatch(data)
         end
+      rescue HandshakeError => e
+        debug [:error, e]
+        @onerror.call(e) if @onerror
+        # Errors during the handshake require the connection to be aborted
+        abort
+      rescue WebSocketError => e
+        debug [:error, e]
+        @onerror.call(e) if @onerror
+        close_websocket_private(1002) # 1002 indicates a protocol error
+      rescue => e
+        debug [:error, e]
+        # These are application errors - raise unless onerror defined
+        @onerror ? @onerror.call(e) : raise(e)
+        # There is no code defined for application errors, so use 3000
+        # (which is reserved for frameworks)
+        close_websocket_private(3000)
       end
 
       def unbind
         debug [:unbind, :connection]
 
         @handler.unbind if @handler
+      rescue => e
+        debug [:error, e]
+        # These are application errors - raise unless onerror defined
+        @onerror ? @onerror.call(e) : raise(e)
       end
 
       def dispatch(data)
@@ -69,28 +91,16 @@ module EventMachine
           return false
         else
           debug [:inbound_headers, data]
-          begin
-            @data << data
-            @handler = HandlerFactory.build(self, @data, @secure, @debug)
-            unless @handler
-              # The whole header has not been received yet.
-              return false
-            end
-            @data = nil
-            @handler.run
-            return true
-          rescue => e
-            debug [:error, e]
-            process_bad_request(e)
+          @data << data
+          @handler = HandlerFactory.build(self, @data, @secure, @debug)
+          unless @handler
+            # The whole header has not been received yet.
             return false
           end
+          @data = nil
+          @handler.run
+          return true
         end
-      end
-
-      def process_bad_request(reason)
-        @onerror.call(reason) if @onerror
-        send_data "HTTP/1.1 400 Bad request\r\n\r\n"
-        close_connection_after_writing
       end
 
       def send_flash_cross_domain_file
@@ -105,18 +115,11 @@ module EventMachine
       end
 
       def send(data)
-        debug [:send, data]
-
         if @handler
           @handler.send_text_frame(data)
         else
           raise WebSocketError, "Cannot send data before onopen callback"
         end
-      end
-
-      def close_with_error(message)
-        @onerror.call(message) if @onerror
-        close_connection_after_writing
       end
 
       def request
@@ -125,6 +128,24 @@ module EventMachine
 
       def state
         @handler ? @handler.state : :handshake
+      end
+
+      private
+
+      # As definited in draft 06 7.2.2, some failures require that the server
+      # abort the websocket connection rather than close cleanly
+      def abort
+        close_connection
+      end
+
+      def close_websocket_private(code, body = nil)
+        if @handler
+          debug [:closing, code]
+          @handler.close_websocket(code, body)
+        else
+          # The handshake hasn't completed - should be safe to terminate
+          abort
+        end
       end
     end
   end

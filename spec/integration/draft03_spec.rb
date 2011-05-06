@@ -1,4 +1,5 @@
 require 'helper'
+require 'integration/shared_examples'
 
 describe "draft03" do
   before :each do
@@ -31,6 +32,20 @@ describe "draft03" do
     }
   end
 
+  it_behaves_like "a websocket server" do
+    def start_server
+      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+        yield ws
+      }
+    end
+
+    def start_client
+      client = EM.connect('0.0.0.0', 12345, Draft03FakeWebSocketClient)
+      client.send_data(format_request(@request))
+      yield client if block_given?
+    end
+  end
+
   # These examples are straight from the spec
   # http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-03#section-4.6
   describe "examples from the spec" do
@@ -48,7 +63,7 @@ describe "draft03" do
         connection.send_data(format_request(@request))
 
         # Send frame
-        connection.onopen = lambda {
+        connection.onopen {
           connection.send_data("\x04\x05Hello")
         }
       end
@@ -68,7 +83,7 @@ describe "draft03" do
         connection.send_data(format_request(@request))
 
         # Send frame
-        connection.onopen = lambda {
+        connection.onopen {
           connection.send_data("\x84\x03Hel")
           connection.send_data("\x00\x02lo")
         }
@@ -84,11 +99,11 @@ describe "draft03" do
         connection.send_data(format_request(@request))
 
         # Send frame
-        connection.onopen = lambda {
+        connection.onopen {
           connection.send_data("\x02\x05Hello")
         }
         
-        connection.onmessage = lambda { |frame|
+        connection.onmessage { |frame|
           next if frame.nil?
           frame.should == "\x03\x05Hello"
           EM.stop
@@ -112,7 +127,7 @@ describe "draft03" do
         connection.send_data(format_request(@request))
 
         # Send frame
-        connection.onopen = lambda {
+        connection.onopen {
           connection.send_data("\x05\x7E\x01\x00" + data)
         }
       end
@@ -134,7 +149,7 @@ describe "draft03" do
         connection.send_data(format_request(@request))
 
         # Send frame
-        connection.onopen = lambda {
+        connection.onopen {
           connection.send_data("\x05\x7F\x00\x00\x00\x00\x00\x01\x00\x00" + data)
         }
       end
@@ -151,12 +166,12 @@ describe "draft03" do
         connection.send_data(format_request(@request))
 
         # Send close frame
-        connection.onopen = lambda {
+        connection.onopen {
           connection.send_data("\x01\x00")
         }
 
         # Check that close ack received
-        connection.onmessage = lambda { |frame|
+        connection.onmessage { |frame|
           frame.should == "\x01\x00"
           EM.stop
         }
@@ -181,14 +196,14 @@ describe "draft03" do
         connection.send_data(format_request(@request))
 
         # 3. Check that close frame recieved and acknowlege it
-        connection.onmessage = lambda { |frame|
+        connection.onmessage { |frame|
           frame.should == "\x01\x00"
           ack_received = true
           connection.send_data("\x01\x00")
         }
 
         # 4. Check that connection is closed _after_ the ack
-        connection.onclose = lambda {
+        connection.onclose {
           ack_received.should == true
           EM.stop
         }
@@ -235,7 +250,7 @@ describe "draft03" do
         connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
         connection.send_data(format_request(@request))
 
-        connection.onmessage = lambda { |frame|
+        connection.onmessage { |frame|
           if frame == "\x01\x00"
             # 3. After the close frame is received send a ping frame, but
             # don't respond with a close ack
