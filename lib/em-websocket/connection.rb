@@ -21,7 +21,9 @@ module EventMachine
         @onclose.call if @onclose
       end
       def trigger_on_error(reason)
-        @onerror.call(reason) if @onerror
+        return false unless @onerror
+        @onerror.call(reason)
+        true
       end
 
       def initialize(options)
@@ -62,17 +64,17 @@ module EventMachine
         end
       rescue HandshakeError => e
         debug [:error, e]
-        @onerror.call(e) if @onerror
+        trigger_on_error(e)
         # Errors during the handshake require the connection to be aborted
         abort
       rescue WebSocketError => e
         debug [:error, e]
-        @onerror.call(e) if @onerror
+        trigger_on_error(e)
         close_websocket_private(1002) # 1002 indicates a protocol error
       rescue => e
         debug [:error, e]
         # These are application errors - raise unless onerror defined
-        @onerror ? @onerror.call(e) : raise(e)
+        trigger_on_error(e) || raise(e)
         # There is no code defined for application errors, so use 3000
         # (which is reserved for frameworks)
         close_websocket_private(3000)
@@ -85,7 +87,7 @@ module EventMachine
       rescue => e
         debug [:error, e]
         # These are application errors - raise unless onerror defined
-        @onerror ? @onerror.call(e) : raise(e)
+        trigger_on_error(e) || raise(e)
       end
 
       def dispatch(data)
