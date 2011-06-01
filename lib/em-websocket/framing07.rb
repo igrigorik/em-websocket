@@ -12,20 +12,19 @@ module EventMachine
       def process_data(newdata)
         error = false
 
-        while !error && @data.size > 5 # mask plus first byte present
+        while !error && @data.size >= 2
           pointer = 0
-
-          @data.read_mask
-          pointer += 4
 
           fin = (@data.getbyte(pointer) & 0b10000000) == 0b10000000
           # Ignoring rsv1-3 for now
           opcode = @data.getbyte(pointer) & 0b00001111
           pointer += 1
 
-          # Ignoring rsv4
+          mask = (@data.getbyte(pointer) & 0b10000000) == 0b10000000
           length = @data.getbyte(pointer) & 0b01111111
           pointer += 1
+
+          # raise WebSocketError, 'Data from client must be masked' unless mask
 
           payload_length = case length
           when 127 # Length defined by 8 bytes
@@ -56,19 +55,29 @@ module EventMachine
             length
           end
 
+          # Compute the expected frame length
+          frame_length = pointer + payload_length
+          frame_length += 4 if mask
+
           # Check buffer size
-          if @data.getbyte(pointer+payload_length-1) == nil
+          if @data.getbyte(frame_length - 1) == nil
             debug [:buffer_incomplete, @data]
             error = true
             next
           end
 
-          # Read application data
+          # Remove frame header
+          @data.slice!(0...pointer)
+          pointer = 0
+
+          # Read application data (unmasked if required)
+          @data.read_mask if mask
+          pointer += 4 if mask
           application_data = @data.getbytes(pointer, payload_length)
           pointer += payload_length
+          @data.unset_mask if mask
           
           # Throw away data up to pointer
-          @data.unset_mask
           @data.slice!(0...pointer)
 
           frame_type = opcode_to_type(opcode)
@@ -133,11 +142,11 @@ module EventMachine
 
       FRAME_TYPES = {
         :continuation => 0,
-        :close => 1,
-        :ping => 2,
-        :pong => 3,
-        :text => 4,
-        :binary => 5
+        :text => 1,
+        :binary => 2,
+        :close => 8,
+        :ping => 9,
+        :pong => 10,
       }
       FRAME_TYPES_INVERSE = FRAME_TYPES.invert
       # Frames are either data frames or control frames
