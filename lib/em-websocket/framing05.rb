@@ -16,6 +16,7 @@ module EventMachine
           pointer = 0
 
           @data.read_mask
+          pointer += 4
 
           fin = (@data.getbyte(pointer) & 0b10000000) == 0b10000000
           # Ignoring rsv1-3 for now
@@ -67,7 +68,8 @@ module EventMachine
           pointer += payload_length
           
           # Throw away data up to pointer
-          @data.slice!(0...(pointer + 4))
+          @data.unset_mask
+          @data.slice!(0...pointer)
 
           frame_type = opcode_to_type(opcode)
 
