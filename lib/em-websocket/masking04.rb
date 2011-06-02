@@ -3,7 +3,9 @@ module EventMachine
     class MaskedString < String
       # Read a 4 bit XOR mask - further requested bytes will be unmasked
       def read_mask
-        raise "MaskedString only operates on BINARY strings" unless encoding.name == "ASCII-8BIT"
+        if respond_to?(:encoding) && encoding.name != "ASCII-8BIT"
+          raise "MaskedString only operates on BINARY strings"
+        end
         raise "Too short" if bytesize < 4 # TODO - change
         @masking_key = String.new(self[0..3])
       end
