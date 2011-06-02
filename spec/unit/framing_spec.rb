@@ -162,8 +162,6 @@ describe EM::WebSocket::Framing04 do
   end
 end
 
-# These examples are straight from the spec
-# http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-07#section-4.6
 describe EM::WebSocket::Framing07 do
   class FramingContainer07
     include EM::WebSocket::Framing07
@@ -181,6 +179,8 @@ describe EM::WebSocket::Framing07 do
     @f.initialize_framing
   end
 
+  # These examples are straight from the spec
+  # http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-07#section-4.6
   describe "examples from the spec" do
     it "a single-frame unmakedtext message" do
       @f.should_receive(:message).with(:text, '', 'Hello')
@@ -218,6 +218,15 @@ describe EM::WebSocket::Framing07 do
       data = "a"*65536
       @f.should_receive(:message).with(:binary, '', data)
       @f << "\x82\x7F\x00\x00\x00\x00\x00\x01\x00\x00" + data
+    end
+  end
+
+  describe "other tests" do
+    it "should raise a DataError if an invalid frame type is requested" do
+      lambda {
+        # Opcode 3 is not supported by this draft
+        @f << "\x83\x05Hello"
+      }.should raise_error(EventMachine::WebSocket::DataError, "Unknown opcode")
     end
   end
 end
