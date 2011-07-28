@@ -1,5 +1,10 @@
 = Changelog
 
+== 0.3.1 / 2011-07-28
+
+- new features:
+  - Support WebSocket drafts 07 & 08
+
 == 0.3.0 / 2011-05-06
 
 - new features:
