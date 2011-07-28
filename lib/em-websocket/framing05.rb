@@ -4,6 +4,10 @@ module EventMachine
   module WebSocket
     module Framing05
       
+      # Set the max frame lenth to very high value (10MB) until there is a
+      # limit specified in the spec to protect against malicious attacks
+      MAXIMUM_FRAME_LENGTH = 10 * 1024 * 1024
+      
       def initialize_framing
         @data = MaskedString.new
         @application_data_buffer = '' # Used for MORE frames
@@ -54,6 +58,11 @@ module EventMachine
             l
           else
             length
+          end
+
+          # Addition to the spec to protect against malicious requests
+          if payload_length > MAXIMUM_FRAME_LENGTH
+            raise DataError, "Frame length too long (#{payload_length} bytes)"
           end
 
           # Check buffer size
