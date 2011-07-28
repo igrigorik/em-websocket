@@ -161,3 +161,72 @@ describe EM::WebSocket::Framing04 do
     end
   end
 end
+
+describe EM::WebSocket::Framing07 do
+  class FramingContainer07
+    include EM::WebSocket::Framing07
+
+    def <<(data)
+      @data << data
+      process_data(data)
+    end
+
+    def debug(*args); end
+  end
+
+  before :each do
+    @f = FramingContainer07.new
+    @f.initialize_framing
+  end
+
+  # These examples are straight from the spec
+  # http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-07#section-4.6
+  describe "examples from the spec" do
+    it "a single-frame unmakedtext message" do
+      @f.should_receive(:message).with(:text, '', 'Hello')
+      @f << "\x81\x05\x48\x65\x6c\x6c\x6f" # "\x84\x05Hello"
+    end
+
+    it "a single-frame masked text message" do
+      @f.should_receive(:message).with(:text, '', 'Hello')
+      @f << "\x81\x85\x37\xfa\x21\x3d\x7f\x9f\x4d\x51\x58" # "\x84\x05Hello"
+    end
+
+    it "a fragmented unmasked text message" do
+      @f.should_receive(:message).with(:text, '', 'Hello')
+      @f << "\x01\x03Hel"
+      @f << "\x80\x02lo"
+    end
+
+    it "Ping request" do
+      @f.should_receive(:message).with(:ping, '', 'Hello')
+      @f << "\x89\x05Hello"
+    end
+
+    it "a pong response" do
+      @f.should_receive(:message).with(:pong, '', 'Hello')
+      @f << "\x8a\x05Hello"
+    end
+
+    it "256 bytes binary message in a single unmasked frame" do
+      data = "a"*256
+      @f.should_receive(:message).with(:binary, '', data)
+      @f << "\x82\x7E\x01\x00" + data
+    end
+
+    it "64KiB binary message in a single unmasked frame" do
+      data = "a"*65536
+      @f.should_receive(:message).with(:binary, '', data)
+      @f << "\x82\x7F\x00\x00\x00\x00\x00\x01\x00\x00" + data
+    end
+  end
+
+  describe "other tests" do
+    it "should raise a DataError if an invalid frame type is requested" do
+      lambda {
+        # Opcode 3 is not supported by this draft
+        @f << "\x83\x05Hello"
+      }.should raise_error(EventMachine::WebSocket::DataError, "Unknown opcode")
+    end
+  end
+end

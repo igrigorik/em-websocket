@@ -87,6 +87,8 @@ module EventMachine
           Handler05.new(connection, request, debug)
         when 6
           Handler06.new(connection, request, debug)
+        when 7
+          Handler07.new(connection, request, debug)
         else
           # According to spec should abort the connection
           raise WebSocketError, "Protocol version #{version} not supported"
