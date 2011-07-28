@@ -6,8 +6,8 @@ Gem::Specification.new do |s|
   s.name        = "em-websocket"
   s.version     = EventMachine::Websocket::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = ["Ilya Grigorik"]
-  s.email       = ["ilya@igvita.com"]
+  s.authors     = ["Ilya Grigorik", "Martyn Loughran"]
+  s.email       = ["ilya@igvita.com", "me@mloughran.com"]
   s.homepage    = "http://github.com/igrigorik/em-websocket"
   s.summary     = %q{EventMachine based WebSocket server}
   s.description = %q{EventMachine based WebSocket server}
