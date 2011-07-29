@@ -120,6 +120,19 @@ module EventMachine
       end
 
       def send(data)
+        # If we're using Ruby 1.9, be pedantic about encodings
+        if data.respond_to?(:force_encoding)
+          # Also accept ascii only data in other encodings for convenience
+          unless (data.encoding == Encoding.find("UTF-8") && data.valid_encoding?) || data.ascii_only?
+            raise WebSocketError, "Data sent to WebSocket must be UTF-8"
+          end
+          # This labels the encoding as binary so that it can be combined with
+          # the BINARY framing
+          data.force_encoding("BINARY")
+        else
+          # TODO: Check that data is valid UTF-8
+        end
+
         if @handler
           @handler.send_text_frame(data)
         else

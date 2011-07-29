@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 shared_examples_for "a websocket server" do
   it "should call onerror if an application error raised in onopen" do
     EM.run {
@@ -58,5 +60,32 @@ shared_examples_for "a websocket server" do
         }
       }
     }
+  end
+
+  # Only run these tests on ruby 1.9
+  if "a".respond_to?(:force_encoding)
+    it "should raise error if you try to send non utf8 text data to ws" do
+      EM.run do
+        start_server { |server|
+          server.onopen {
+            # Create a string which claims to be UTF-8 but which is not
+            s = "ê" # utf-8 string
+            s.encode!("ISO-8859-1")
+            s.force_encoding("UTF-8")
+            s.valid_encoding?.should == false # now invalid utf8
+
+            # Send non utf8 encoded data
+            server.send(s)
+          }
+          server.onerror { |error|
+            error.class.should == EventMachine::WebSocket::WebSocketError
+            error.message.should == "Data sent to WebSocket must be UTF-8"
+            EM.stop
+          }
+        }
+
+        start_client { }
+      end
+    end
   end
 end
