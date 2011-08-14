@@ -124,7 +124,7 @@ module EventMachine
         if data.respond_to?(:force_encoding)
           # Also accept ascii only data in other encodings for convenience
           unless (data.encoding == Encoding.find("UTF-8") && data.valid_encoding?) || data.ascii_only?
-            raise WebSocketError, "Data sent to WebSocket must be UTF-8"
+            #  raise WebSocketError, "Data sent to WebSocket must be UTF-8"  # not anymore
           end
           # This labels the encoding as binary so that it can be combined with
           # the BINARY framing
