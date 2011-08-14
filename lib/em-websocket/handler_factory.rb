@@ -52,6 +52,8 @@ module EventMachine
 
         # Additional handling of bytes after the header if required
         case version
+        when 8
+          raise HandshakeError, "Extra bytes after header"  if !remains.empty?
         when 75
           if !remains.empty?
             raise HandshakeError, "Extra bytes after header"
@@ -76,6 +78,8 @@ module EventMachine
         request['host'] = Addressable::URI.parse("#{protocol}://"+request['host'])
 
         case version
+        when 8
+          Handler10.new(connection, request, debug)
         when 75
           Handler75.new(connection, request, debug)
         when 76
