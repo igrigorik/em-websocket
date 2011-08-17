@@ -12,7 +12,8 @@
           element.appendChild(p);
         }
 
-        ws = new WebSocket("ws://localhost:8080/");
+        var Socket = "MozWebSocket" in window ? MozWebSocket : WebSocket;
+        var ws = new Socket("ws://localhost:8080/");
         ws.onmessage = function(evt) { debug("Message: " + evt.data); };
         ws.onclose = function() { debug("socket closed"); };
         ws.onopen = function() {
