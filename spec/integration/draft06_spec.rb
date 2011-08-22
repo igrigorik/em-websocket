@@ -62,6 +62,7 @@ describe "draft06" do
       start_server { |server|
         server.onmessage { |msg|
           msg.should == 'Hello'
+          msg.encoding.should == Encoding.find("UTF-8")
           EM.stop
         }
         server.onerror {
