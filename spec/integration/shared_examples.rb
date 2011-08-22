@@ -79,7 +79,7 @@ shared_examples_for "a websocket server" do
           }
           server.onerror { |error|
             error.class.should == EventMachine::WebSocket::WebSocketError
-            error.message.should == "Data sent to WebSocket must be UTF-8"
+            error.message.should == "Data sent to WebSocket must be valid UTF-8 but was UTF-8 (valid: false)"
             EM.stop
           }
         }
