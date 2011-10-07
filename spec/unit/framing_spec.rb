@@ -96,6 +96,15 @@ describe EM::WebSocket::Framing03 do
     end
   end
 
+  describe "other tests" do
+    it "should accept a fragmented unmasked text message in 3 frames" do
+      @f.should_receive(:message).with(:text, '', 'Hello world')
+      @f << "\x84\x03Hel"
+      @f << "\x80\x02lo"
+      @f << "\x00\x06 world"
+    end
+  end
+
   describe "error cases" do
     it "should raise an exception on continuation frame without preceeding more frame" do
       lambda {
@@ -158,6 +167,15 @@ describe EM::WebSocket::Framing04 do
       data = "a"*65536
       @f.should_receive(:message).with(:binary, '', data)
       @f << "\x85\x7F\x00\x00\x00\x00\x00\x01\x00\x00" + data
+    end
+  end
+
+  describe "other tests" do
+    it "should accept a fragmented unmasked text message in 3 frames" do
+      @f.should_receive(:message).with(:text, '', 'Hello world')
+      @f << "\x04\x03Hel"
+      @f << "\x00\x02lo"
+      @f << "\x80\x06 world"
     end
   end
 end
@@ -227,6 +245,13 @@ describe EM::WebSocket::Framing07 do
         # Opcode 3 is not supported by this draft
         @f << "\x83\x05Hello"
       }.should raise_error(EventMachine::WebSocket::DataError, "Unknown opcode")
+    end
+
+    it "should accept a fragmented unmasked text message in 3 frames" do
+      @f.should_receive(:message).with(:text, '', 'Hello world')
+      @f << "\x01\x03Hel"
+      @f << "\x00\x02lo"
+      @f << "\x80\x06 world"
     end
   end
 end

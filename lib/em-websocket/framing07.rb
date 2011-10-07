@@ -89,7 +89,8 @@ module EventMachine
           if !fin
             debug [:moreframe, frame_type, application_data]
             @application_data_buffer << application_data
-            @frame_type = frame_type
+            # The message type is passed in the first frame
+            @frame_type ||= frame_type
           else
             # Message is complete
             if frame_type == :continuation
