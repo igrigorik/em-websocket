@@ -1,5 +1,12 @@
 = Changelog
 
+== 0.3.2 / 2011-10-09
+
+- bugfixes:
+  - Handling of messages with > 2 frames
+  - Encode string passed to onmessage handler as UTF-8 on Ruby 1.9
+  - Add 10MB frame length limit to all draft versions
+
 == 0.3.1 / 2011-07-28
 
 - new features:
