@@ -97,7 +97,7 @@ describe "WebSocket server draft76" do
         EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
           # Fail if foobar message is received
           ws.onmessage { |msg|
-            failed
+            fail
           }
         }
         

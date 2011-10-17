@@ -11,7 +11,7 @@ describe "WebSocket server" do
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('http://127.0.0.1:12345/').get :timeout => 0
         http.errback { done }
-        http.callback { failed }
+        http.callback { fail }
       end
 
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) {}
@@ -22,7 +22,7 @@ describe "WebSocket server" do
     em {
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
-        http.errback { failed }
+        http.errback { fail }
         http.callback {
           http.response_header.status.should == 101
           http.close_connection
@@ -51,7 +51,7 @@ describe "WebSocket server" do
     em {
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get(:query => {'foo' => 'bar', 'baz' => 'qux'}, :timeout => 0)
-        http.errback { failed }
+        http.errback { fail }
         http.callback {
           http.response_header.status.should == 101
           http.close_connection
@@ -79,7 +79,7 @@ describe "WebSocket server" do
     em {
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get(:timeout => 0)
-        http.errback { failed }
+        http.errback { fail }
         http.callback {
           http.response_header.status.should == 101
           http.close_connection

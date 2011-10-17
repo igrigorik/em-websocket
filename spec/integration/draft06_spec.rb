@@ -69,7 +69,7 @@ describe "draft06" do
           done
         }
         server.onerror {
-          failed
+          fail
         }
       }
   

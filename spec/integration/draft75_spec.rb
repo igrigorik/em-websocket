@@ -27,7 +27,7 @@ describe "WebSocket server draft75" do
       MSG = "Hello World!"
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
-        http.errback { failed }
+        http.errback { fail }
         http.callback { http.response_header.status.should == 101 }
 
         http.stream { |msg|
@@ -51,7 +51,7 @@ describe "WebSocket server draft75" do
 
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
-        http.errback { failed }
+        http.errback { fail }
         http.stream {|msg|}
         http.callback {
           http.response_header.status.should == 101
@@ -77,7 +77,7 @@ describe "WebSocket server draft75" do
     em {
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
-        http.errback { failed }
+        http.errback { fail }
         http.callback {
           http.response_header.status.should == 101
           http.close_connection
@@ -100,11 +100,11 @@ describe "WebSocket server draft75" do
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('http://127.0.0.1:12345/').get :timeout => 0
         http.errback { http.response_header.status.should == 0 }
-        http.callback { failed }
+        http.callback { fail }
       end
 
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
-        ws.onopen { failed }
+        ws.onopen { fail }
         ws.onclose { EventMachine.stop }
         ws.onerror {|e|
           e.should be_an_instance_of EventMachine::WebSocket::HandshakeError

@@ -92,11 +92,6 @@ class Draft75WebSocketClient
   end
 end
 
-def failed
-  EventMachine.stop
-  fail
-end
-
 def format_request(r)
   data = "#{r[:method]} #{r[:path]} HTTP/1.1\r\n"
   header_lines = r[:headers].map { |k,v| "#{k}: #{v}" }
