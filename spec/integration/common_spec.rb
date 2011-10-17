@@ -3,20 +3,23 @@ require 'helper'
 # These tests are not specifi to any particular draft of the specification
 # 
 describe "WebSocket server" do
+  include EM::SpecHelper
+  default_timeout 1
+
   it "should fail on non WebSocket requests" do
-    EM.run do
+    em {
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('http://127.0.0.1:12345/').get :timeout => 0
-        http.errback { EM.stop }
+        http.errback { done }
         http.callback { failed }
       end
 
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) {}
-    end
+    }
   end
   
   it "should populate ws.request with appropriate headers" do
-    EM.run do
+    em {
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
         http.errback { failed }
@@ -41,11 +44,11 @@ describe "WebSocket server" do
           EventMachine.stop
         }
       end
-    end
+    }
   end
   
   it "should allow sending and retrieving query string args passed in on the connection request." do
-    EM.run do
+    em {
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get(:query => {'foo' => 'bar', 'baz' => 'qux'}, :timeout => 0)
         http.errback { failed }
@@ -69,11 +72,11 @@ describe "WebSocket server" do
           EventMachine.stop
         }
       end
-    end
+    }
   end
   
   it "should ws.response['Query'] to empty hash when no query string params passed in connection URI" do
-    EM.run do
+    em {
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get(:timeout => 0)
         http.errback { failed }
@@ -94,18 +97,18 @@ describe "WebSocket server" do
           EventMachine.stop
         }
       end
-    end
+    }
   end
   
   it "should raise an exception if frame sent before handshake complete" do
-    EM.run {
+    em {
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |c|
         # We're not using a real client so the handshake will not be sent
         EM.add_timer(0.1) {
           lambda {
             c.send('early message')
           }.should raise_error('Cannot send data before onopen callback')
-          EM.stop
+          done
         }
       }
 

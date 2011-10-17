@@ -6,6 +6,8 @@ require 'integration/shared_examples'
 # to currently estabish a websocket connection using the draft75 protocol.
 # 
 describe "WebSocket server draft75" do
+  include EM::SpecHelper
+  default_timeout 1
 
   it_behaves_like "a websocket server" do
     def start_server
@@ -21,7 +23,7 @@ describe "WebSocket server draft75" do
   end
 
   it "should automatically complete WebSocket handshake" do
-    EM.run do
+    em {
       MSG = "Hello World!"
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
@@ -39,11 +41,11 @@ describe "WebSocket server draft75" do
           ws.send MSG
         }
       end
-    end
+    }
   end
 
   it "should split multiple messages into separate callbacks" do
-    EM.run do
+    em {
       messages = %w[1 2]
       received = []
 
@@ -68,11 +70,11 @@ describe "WebSocket server draft75" do
           EventMachine.stop if received.size == messages.size
         }
       end
-    end
+    }
   end
 
   it "should call onclose callback when client closes connection" do
-    EM.run do
+    em {
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
         http.errback { failed }
@@ -90,11 +92,11 @@ describe "WebSocket server draft75" do
           EventMachine.stop
         }
       end
-    end
+    }
   end
 
   it "should call onerror callback with raised exception and close connection on bad handshake" do
-    EM.run do
+    em {
       EventMachine.add_timer(0.1) do
         http = EventMachine::HttpRequest.new('http://127.0.0.1:12345/').get :timeout => 0
         http.errback { http.response_header.status.should == 0 }
@@ -110,6 +112,6 @@ describe "WebSocket server draft75" do
           EventMachine.stop
         }
       end
-    end
+    }
   end
 end

@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'rspec'
+require 'em-spec/rspec'
 require 'pp'
 require 'em-http'
 

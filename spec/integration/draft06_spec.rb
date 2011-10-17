@@ -1,6 +1,9 @@
 require 'helper'
 
 describe "draft06" do
+  include EM::SpecHelper
+  default_timeout 1
+
   before :each do
     @request = {
       :port => 80,
@@ -40,7 +43,7 @@ describe "draft06" do
   end
   
   it "should open connection" do
-    EM.run {
+    em {
       start_server { |server|
         server.onopen {
           server.instance_variable_get(:@handler).class.should == EventMachine::WebSocket::Handler06
@@ -51,19 +54,19 @@ describe "draft06" do
         client.onopen {
           client.handshake_response.lines.sort.
             should == format_response(@response).lines.sort
-          EM.stop
+          done
         }
       }
     }
   end
   
   it "should accept a single-frame text message (masked)" do
-    EM.run do
+    em {
       start_server { |server|
         server.onmessage { |msg|
           msg.should == 'Hello'
           msg.encoding.should == Encoding.find("UTF-8")
-          EM.stop
+          done
         }
         server.onerror {
           failed
@@ -75,6 +78,6 @@ describe "draft06" do
           client.send_data("\x00\x00\x01\x00\x84\x05Ielln")
         }
       }
-    end
+    }
   end
 end

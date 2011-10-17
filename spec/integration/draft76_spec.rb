@@ -2,6 +2,9 @@ require 'helper'
 require 'integration/shared_examples'
 
 describe "WebSocket server draft76" do
+  include EM::SpecHelper
+  default_timeout 1
+
   before :each do
     @request = {
       :port => 80,
@@ -46,7 +49,7 @@ describe "WebSocket server draft76" do
   end
 
   it "should send back the correct handshake response" do
-    EM.run do
+    em {
       EM.add_timer(0.1) do
         EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
         
@@ -57,14 +60,14 @@ describe "WebSocket server draft76" do
         connection.onopen {
           connection.handshake_response.lines.sort.
             should == format_response(@response).lines.sort
-          EM.stop
+          done
         }
       end
-    end
+    }
   end
   
   it "should send closing frame back and close the connection after recieving closing frame" do
-    EM.run do
+    em {
       EM.add_timer(0.1) do
         EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
   
@@ -82,14 +85,14 @@ describe "WebSocket server draft76" do
         connection.onclose {
           connection.packets[0].should == 
             EM::WebSocket::Handler76::TERMINATE_STRING
-          EM.stop
+          done
         }
       end
-    end
+    }
   end
   
   it "should ignore any data received after the closing frame" do
-    EM.run do
+    em {
       EM.add_timer(0.1) do
         EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
           # Fail if foobar message is received
@@ -109,14 +112,14 @@ describe "WebSocket server draft76" do
         }
   
         connection.onclose {
-          EM.stop
+          done
         }
       end
-    end
+    }
   end
 
   it "should accept null bytes within the frame after a line return" do
-    EM.run do
+    em {
       EM.add_timer(0.1) do
         EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
           ws.onmessage { |msg|
@@ -135,19 +138,19 @@ describe "WebSocket server draft76" do
         }
   
         connection.onclose {
-          EM.stop
+          done
         }
       end
-    end
+    }
   end
 
   it "should handle unreasonable frame lengths by calling onerror callback" do
-    EM.run do
+    em {
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |server|
         server.onerror { |error|
           error.should be_an_instance_of EM::WebSocket::DataError
           error.message.should == "Frame length too long (1180591620717411303296 bytes)"
-          EM.stop
+          done
         }
       }
 
@@ -162,16 +165,16 @@ describe "WebSocket server draft76" do
       client.onopen {
         client.send_data("\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00")
       }
-    end
+    }
   end
   
   it "should handle impossible frames by calling onerror callback" do
-    EM.run do
+    em {
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |server|
         server.onerror { |error|
           error.should be_an_instance_of EM::WebSocket::DataError
           error.message.should == "Invalid frame received"
-          EM.stop
+          done
         }
       }
 
@@ -182,16 +185,16 @@ describe "WebSocket server draft76" do
       client.onopen {
         client.send_data("foobar") # Does not start with \x00 or \xff
       }
-    end
+    }
   end
 
   it "should handle invalid http requests by raising HandshakeError passed to onerror callback" do
-    EM.run {
+    em {
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |server|
         server.onerror { |error|
           error.should be_an_instance_of EM::WebSocket::HandshakeError
           error.message.should == "Invalid HTTP header"
-          EM.stop
+          done
         }
       }
       
@@ -201,7 +204,7 @@ describe "WebSocket server draft76" do
   end
 
   it "should handle handshake request split into two TCP packets" do
-    EM.run do
+    em {
       EM.add_timer(0.1) do
         EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
 
@@ -214,7 +217,7 @@ describe "WebSocket server draft76" do
         connection.onopen {
           connection.handshake_response.lines.sort.
             should == format_response(@response).lines.sort
-          EM.stop
+          done
         }
 
         EM.add_timer(0.1) do
@@ -222,6 +225,6 @@ describe "WebSocket server draft76" do
           connection.send_data(data[(data.length / 2)..-1])
         end
       end
-    end
+    }
   end
 end

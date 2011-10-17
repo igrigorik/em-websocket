@@ -1,6 +1,9 @@
 require 'helper'
 
 describe "draft05" do
+  include EM::SpecHelper
+  default_timeout 1
+
   before :each do
     @request = {
       :port => 80,
@@ -31,11 +34,11 @@ describe "draft05" do
   end
   
   it "should open connection" do
-    EM.run {
+    em {
       start_server { |server|
         server.onopen {
           server.instance_variable_get(:@handler).class.should == EventMachine::WebSocket::Handler05
-          EM.stop
+          done
         }
       }
       

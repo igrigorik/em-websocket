@@ -2,6 +2,9 @@ require 'helper'
 require 'integration/shared_examples'
 
 describe "draft03" do
+  include EM::SpecHelper
+  default_timeout 1
+
   before :each do
     @request = {
       :port => 80,
@@ -50,11 +53,11 @@ describe "draft03" do
   # http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-03#section-4.6
   describe "examples from the spec" do
     it "should accept a single-frame text message" do
-      EM.run do
+      em {
         EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
           ws.onmessage { |msg|
             msg.should == 'Hello'
-            EM.stop
+            done
           }
         }
 
@@ -66,15 +69,15 @@ describe "draft03" do
         connection.onopen {
           connection.send_data("\x04\x05Hello")
         }
-      end
+      }
     end
     
     it "should accept a fragmented text message" do
-      EM.run do
+      em {
         EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
           ws.onmessage { |msg|
             msg.should == 'Hello'
-            EM.stop
+            done
           }
         }
 
@@ -87,11 +90,11 @@ describe "draft03" do
           connection.send_data("\x84\x03Hel")
           connection.send_data("\x00\x02lo")
         }
-      end
+      }
     end
     
     it "should accept a ping request and respond with the same body" do
-      EM.run do
+      em {
         EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws| }
 
         # Create a fake client which sends draft 76 handshake
@@ -106,19 +109,19 @@ describe "draft03" do
         connection.onmessage { |frame|
           next if frame.nil?
           frame.should == "\x03\x05Hello"
-          EM.stop
+          done
         }
-      end
+      }
     end
     
     it "should accept a 256 bytes binary message in a single frame" do
-      EM.run do
+      em {
         data = "a" * 256
         
         EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
           ws.onmessage { |msg|
             msg.should == data
-            EM.stop
+            done
           }
         }
 
@@ -130,17 +133,17 @@ describe "draft03" do
         connection.onopen {
           connection.send_data("\x05\x7E\x01\x00" + data)
         }
-      end
+      }
     end
     
     it "should accept a 64KiB binary message in a single frame" do
-      EM.run do
+      em {
         data = "a" * 65536
         
         EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
           ws.onmessage { |msg|
             msg.should == data
-            EM.stop
+            done
           }
         }
 
@@ -152,13 +155,13 @@ describe "draft03" do
         connection.onopen {
           connection.send_data("\x05\x7F\x00\x00\x00\x00\x00\x01\x00\x00" + data)
         }
-      end
+      }
     end
   end
 
   describe "close handling" do
     it "should respond to a new close frame with a close frame" do
-      EM.run do
+      em {
         EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws| }
 
         # Create a fake client which sends draft 76 handshake
@@ -173,13 +176,13 @@ describe "draft03" do
         # Check that close ack received
         connection.onmessage { |frame|
           frame.should == "\x01\x00"
-          EM.stop
+          done
         }
-      end
+      }
     end
 
     it "should close the connection on receiving a close acknowlegement" do
-      EM.run do
+      em {
         ack_received = false
 
         EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
@@ -205,13 +208,13 @@ describe "draft03" do
         # 4. Check that connection is closed _after_ the ack
         connection.onclose {
           ack_received.should == true
-          EM.stop
+          done
         }
-      end
+      }
     end
 
     it "should not allow data frame to be sent after close frame sent" do
-      EM.run {
+      em {
         EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
           ws.onopen {
             # 2. Send a close frame
@@ -224,7 +227,7 @@ describe "draft03" do
               lambda {
                 ws.send('hello world')
               }.should raise_error(EM::WebSocket::WebSocketError, 'Cannot send data frame since connection is closing')
-              EM.stop
+              done
             }
           }
         }
@@ -236,7 +239,7 @@ describe "draft03" do
     end
 
     it "should still respond to control frames after close frame sent" do
-      EM.run {
+      em {
         EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
           ws.onopen {
             # 2. Send a close frame
@@ -258,7 +261,7 @@ describe "draft03" do
           else
             # 4. Check that the pong is received
             frame.should == "\x03\x05Hello"
-            EM.stop
+            done
           end
         }
       }

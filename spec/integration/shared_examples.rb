@@ -2,7 +2,7 @@
 
 shared_examples_for "a websocket server" do
   it "should call onerror if an application error raised in onopen" do
-    EM.run {
+    em {
       start_server { |ws|
         ws.onopen {
           raise "application error"
@@ -10,7 +10,7 @@ shared_examples_for "a websocket server" do
 
         ws.onerror { |e|
           e.message.should == "application error"
-          EM.stop
+          done
         }
       }
 
@@ -19,7 +19,7 @@ shared_examples_for "a websocket server" do
   end
 
   it "should call onerror if an application error raised in onmessage" do
-    EM.run {
+    em {
       start_server { |server|
         server.onmessage {
           raise "application error"
@@ -27,7 +27,7 @@ shared_examples_for "a websocket server" do
 
         server.onerror { |e|
           e.message.should == "application error"
-          EM.stop
+          done
         }
       }
 
@@ -40,7 +40,7 @@ shared_examples_for "a websocket server" do
   end
 
   it "should call onerror in an application error raised in onclose" do
-    EM.run {
+    em {
       start_server { |server|
         server.onclose {
           raise "application error"
@@ -48,7 +48,7 @@ shared_examples_for "a websocket server" do
 
         server.onerror { |e|
           e.message.should == "application error"
-          EM.stop
+          done
         }
       }
 
@@ -65,7 +65,7 @@ shared_examples_for "a websocket server" do
   # Only run these tests on ruby 1.9
   if "a".respond_to?(:force_encoding)
     it "should raise error if you try to send non utf8 text data to ws" do
-      EM.run do
+      em {
         start_server { |server|
           server.onopen {
             # Create a string which claims to be UTF-8 but which is not
@@ -80,12 +80,12 @@ shared_examples_for "a websocket server" do
           server.onerror { |error|
             error.class.should == EventMachine::WebSocket::WebSocketError
             error.message.should == "Data sent to WebSocket must be valid UTF-8 but was UTF-8 (valid: false)"
-            EM.stop
+            done
           }
         }
 
         start_client { }
-      end
+      }
     end
   end
 end
