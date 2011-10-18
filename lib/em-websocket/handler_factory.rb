@@ -90,7 +90,13 @@ module EventMachine
         when 7
           Handler07.new(connection, request, debug)
         when 8
+          # drafts 9, 10, 11 and 12 should never change the version
+          # number as they are all the same as version 08.
           Handler08.new(connection, request, debug)
+        when 13
+          # drafts 13 to 17 all identify as version 13 as they are
+          # only minor changes or text changes.
+          Handler13.new(connection, request, debug)
         else
           # According to spec should abort the connection
           raise WebSocketError, "Protocol version #{version} not supported"
