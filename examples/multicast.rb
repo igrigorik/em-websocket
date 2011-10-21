@@ -1,4 +1,5 @@
-require 'lib/em-websocket'
+require 'em-websocket'
+# requires the twitter-stream gem
 require 'twitter/json_stream'
 require 'json'
 
@@ -15,7 +16,8 @@ EventMachine.run {
 
   @twitter = Twitter::JSONStream.connect(
     :path => '/1/statuses/filter.json?track=ruby',
-    :auth => "#{username}:#{password}"
+    :auth => "#{username}:#{password}",
+    :ssl => true
   )
 
   @twitter.each_item do |status|
@@ -37,8 +39,8 @@ EventMachine.run {
       ws.onclose {
         @channel.unsubscribe(sid)
       }
-
     }
+
   end
 
   puts "Server started"
