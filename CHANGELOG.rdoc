@@ -1,5 +1,10 @@
 = Changelog
 
+== 0.3.4 / 2011-10-24
+
+- bugfixes:
+  - Fixed gemfile
+
 == 0.3.3 / 2011-10-21
 
 - new features:
