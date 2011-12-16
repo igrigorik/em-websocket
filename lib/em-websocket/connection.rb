@@ -10,6 +10,8 @@ module EventMachine
       def onclose(&blk);    @onclose = blk;   end
       def onerror(&blk);    @onerror = blk;   end
       def onmessage(&blk);  @onmessage = blk; end
+      def onping(&blk);     @onping = blk;    end
+      def onpong(&blk);     @onpong = blk;    end
 
       def trigger_on_message(msg)
         @onmessage.call(msg) if @onmessage
@@ -19,6 +21,12 @@ module EventMachine
       end
       def trigger_on_close
         @onclose.call if @onclose
+      end
+      def trigger_on_ping
+        @onping.call if @onping
+      end
+      def trigger_on_pong
+        @onpong.call if @onpong
       end
       def trigger_on_error(reason)
         return false unless @onerror
@@ -137,6 +145,22 @@ module EventMachine
           @handler.send_text_frame(data)
         else
           raise WebSocketError, "Cannot send data before onopen callback"
+        end
+      end
+
+      def ping
+        if @handler
+          @handler.ping
+        else
+          raise WebSocketError, "Cannot ping before onopen callback"
+        end
+      end
+
+      def pingable?
+        if @handler
+          @handler.pingable?
+        else
+          raise WebSocketError, "Cannot test whether pingable before onopen callback"
         end
       end
 

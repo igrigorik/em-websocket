@@ -22,8 +22,9 @@ module EventMachine
         when :ping
           # Pong back the same data
           send_frame(:pong, application_data)
+          @connection.trigger_on_ping
         when :pong
-          # TODO: Do something. Complete a deferrable established by a ping?
+          @connection.trigger_on_pong
         when :text
           if application_data.respond_to?(:force_encoding)
             application_data.force_encoding("UTF-8")
@@ -32,6 +33,15 @@ module EventMachine
         when :binary
           @connection.trigger_on_message(application_data)
         end
+      end
+
+      def ping
+        send_frame(:ping, '')
+        true
+      end
+
+      def pingable?
+        true
       end
     end
   end
