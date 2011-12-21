@@ -50,97 +50,89 @@ describe "WebSocket server draft76" do
 
   it "should send back the correct handshake response" do
     em {
-      EM.add_timer(0.1) do
-        EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
-        
-        # Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        connection.send_data(format_request(@request))
-        
-        connection.onopen {
-          connection.handshake_response.lines.sort.
-            should == format_response(@response).lines.sort
-          done
-        }
-      end
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
+
+      # Create a fake client which sends draft 76 handshake
+      connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+      connection.send_data(format_request(@request))
+
+      connection.onopen {
+        connection.handshake_response.lines.sort.
+          should == format_response(@response).lines.sort
+        done
+      }
     }
   end
   
   it "should send closing frame back and close the connection after recieving closing frame" do
     em {
-      EM.add_timer(0.1) do
-        EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
-  
-        # Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        connection.send_data(format_request(@request))
-  
-        # Send closing frame after handshake complete
-        connection.onopen {
-          connection.send_data(EM::WebSocket::Handler76::TERMINATE_STRING)
-        }
-  
-        # Check that this causes a termination string to be returned and the 
-        # connection close
-        connection.onclose {
-          connection.packets[0].should == 
-            EM::WebSocket::Handler76::TERMINATE_STRING
-          done
-        }
-      end
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
+
+      # Create a fake client which sends draft 76 handshake
+      connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+      connection.send_data(format_request(@request))
+
+      # Send closing frame after handshake complete
+      connection.onopen {
+        connection.send_data(EM::WebSocket::Handler76::TERMINATE_STRING)
+      }
+
+      # Check that this causes a termination string to be returned and the
+      # connection close
+      connection.onclose {
+        connection.packets[0].should ==
+          EM::WebSocket::Handler76::TERMINATE_STRING
+        done
+      }
     }
   end
   
   it "should ignore any data received after the closing frame" do
     em {
-      EM.add_timer(0.1) do
-        EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
-          # Fail if foobar message is received
-          ws.onmessage { |msg|
-            fail
-          }
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+        # Fail if foobar message is received
+        ws.onmessage { |msg|
+          fail
         }
-        
-        # Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        connection.send_data(format_request(@request))
-  
-        # Send closing frame after handshake complete, followed by another msg
-        connection.onopen {
-          connection.send_data(EM::WebSocket::Handler76::TERMINATE_STRING)
-          connection.send('foobar')
-        }
-  
-        connection.onclose {
-          done
-        }
-      end
+      }
+
+      # Create a fake client which sends draft 76 handshake
+      connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+      connection.send_data(format_request(@request))
+
+      # Send closing frame after handshake complete, followed by another msg
+      connection.onopen {
+        connection.send_data(EM::WebSocket::Handler76::TERMINATE_STRING)
+        connection.send('foobar')
+      }
+
+      connection.onclose {
+        done
+      }
     }
   end
 
   it "should accept null bytes within the frame after a line return" do
     em {
-      EM.add_timer(0.1) do
-        EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
-          ws.onmessage { |msg|
-            msg.should == "\n\000" 
-          }
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+        ws.onmessage { |msg|
+          msg.should == "\n\000"
         }
-  
-        # Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        connection.send_data(format_request(@request))
-  
-        # Send closing frame after handshake complete
-        connection.onopen {
-          connection.send_data("\000\n\000\377")
-          connection.send_data(EM::WebSocket::Handler76::TERMINATE_STRING)
-        }
-  
-        connection.onclose {
-          done
-        }
-      end
+      }
+
+      # Create a fake client which sends draft 76 handshake
+      connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+      connection.send_data(format_request(@request))
+
+      # Send closing frame after handshake complete
+      connection.onopen {
+        connection.send_data("\000\n\000\377")
+        connection.send_data(EM::WebSocket::Handler76::TERMINATE_STRING)
+      }
+
+      connection.onclose {
+        done
+      }
     }
   end
 
@@ -205,25 +197,23 @@ describe "WebSocket server draft76" do
 
   it "should handle handshake request split into two TCP packets" do
     em {
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
+
+      # Create a fake client which sends draft 76 handshake
+      connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+      data = format_request(@request)
+      # Sends first half of the request
+      connection.send_data(data[0...(data.length / 2)])
+
+      connection.onopen {
+        connection.handshake_response.lines.sort.
+          should == format_response(@response).lines.sort
+        done
+      }
+
       EM.add_timer(0.1) do
-        EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
-
-        # Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        data = format_request(@request)
-        # Sends first half of the request
-        connection.send_data(data[0...(data.length / 2)])
-
-        connection.onopen {
-          connection.handshake_response.lines.sort.
-            should == format_response(@response).lines.sort
-          done
-        }
-
-        EM.add_timer(0.1) do
-          # Sends second half of the request
-          connection.send_data(data[(data.length / 2)..-1])
-        end
+        # Sends second half of the request
+        connection.send_data(data[(data.length / 2)..-1])
       end
     }
   end

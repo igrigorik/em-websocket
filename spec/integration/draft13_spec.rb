@@ -47,19 +47,20 @@ describe "draft13" do
 
   it "should send back the correct handshake response" do
     em {
-      EM.add_timer(0.1) do
-        EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
 
-        # Create a fake client which sends draft 13 handshake
-        connection = EM.connect('0.0.0.0', 12345, Draft07FakeWebSocketClient)
-        connection.send_data(format_request(@request))
-        
-        connection.onopen {
-          connection.handshake_response.lines.sort.
-            should == format_response(@response).lines.sort
-          done
-        }
-      end
+      # Create a fake client which sends draft 13 handshake
+      connection = EM.connect('0.0.0.0', 12345, Draft07FakeWebSocketClient)
+      connection.send_data(format_request(@request))
+
+      connection.onopen {
+        connection.handshake_response.lines.sort.
+          should == format_response(@response).lines.sort
+        done
+      }
+    }
+  end
+
   # TODO: This test would be much nicer with a real websocket client...
   it "should support sending pings and binding to onpong" do
     em {
