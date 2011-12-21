@@ -1,6 +1,11 @@
 require 'helper'
 
 describe "EventMachine::WebSocket::Handler" do
+  def handler(request, secure = false)
+    connection = Object.new
+    EM::WebSocket::HandlerFactory.build(connection, format_request(request), secure)
+  end
+
   before :each do
     @request = {
       :port => 80,

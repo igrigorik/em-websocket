@@ -132,11 +132,6 @@ def format_response(r)
   data
 end
 
-def handler(request, secure = false)
-  connection = Object.new
-  EM::WebSocket::HandlerFactory.build(connection, format_request(request), secure)
-end
-
 RSpec::Matchers.define :send_handshake do |response|
   match do |actual|
     actual.handshake.lines.sort == format_response(response).lines.sort
