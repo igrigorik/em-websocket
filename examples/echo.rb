@@ -1,4 +1,4 @@
-require 'lib/em-websocket'
+require File.expand_path('../../lib/em-websocket', __FILE__)
 
 EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080, :debug => true) do |ws|
   ws.onopen    { ws.send "Hello Client!"}
