@@ -22,11 +22,11 @@ module EventMachine
       def trigger_on_close
         @onclose.call if @onclose
       end
-      def trigger_on_ping
-        @onping.call if @onping
+      def trigger_on_ping(data)
+        @onping.call(data) if @onping
       end
-      def trigger_on_pong
-        @onpong.call if @onpong
+      def trigger_on_pong(data)
+        @onpong.call(data) if @onpong
       end
       def trigger_on_error(reason)
         return false unless @onerror
@@ -148,14 +148,21 @@ module EventMachine
         end
       end
 
-      def ping
+      # Send a ping to the client. The client must respond with a pong.
+      #
+      # In the case that the client is running a WebSocket draft < 01, false
+      # is returned since ping & pong are not supported
+      #
+      def ping(body = '')
         if @handler
-          @handler.ping
+          @handler.pingable? ? @handler.send_frame(:ping, body) && true : false
         else
           raise WebSocketError, "Cannot ping before onopen callback"
         end
       end
 
+      # Test whether the connection is pingable (i.e. the WebSocket draft in
+      # use is >= 01)
       def pingable?
         if @handler
           @handler.pingable?
