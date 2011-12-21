@@ -161,6 +161,20 @@ module EventMachine
         end
       end
 
+      # Send an unsolicited pong message, as allowed by the protocol. The
+      # client is not expected to respond to this message.
+      #
+      # em-websocket automatically takes care of sending pong replies to
+      # incoming ping messages, as the protocol demands.
+      #
+      def pong(body = '')
+        if @handler
+          @handler.pingable? ? @handler.send_frame(:pong, body) && true : false
+        else
+          raise WebSocketError, "Cannot ping before onopen callback"
+        end
+      end
+
       # Test whether the connection is pingable (i.e. the WebSocket draft in
       # use is >= 01)
       def pingable?
