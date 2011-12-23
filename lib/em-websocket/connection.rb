@@ -10,6 +10,8 @@ module EventMachine
       def onclose(&blk);    @onclose = blk;   end
       def onerror(&blk);    @onerror = blk;   end
       def onmessage(&blk);  @onmessage = blk; end
+      def onping(&blk);     @onping = blk;    end
+      def onpong(&blk);     @onpong = blk;    end
 
       def trigger_on_message(msg)
         @onmessage.call(msg) if @onmessage
@@ -19,6 +21,12 @@ module EventMachine
       end
       def trigger_on_close
         @onclose.call if @onclose
+      end
+      def trigger_on_ping(data)
+        @onping.call(data) if @onping
+      end
+      def trigger_on_pong(data)
+        @onpong.call(data) if @onpong
       end
       def trigger_on_error(reason)
         return false unless @onerror
@@ -137,6 +145,43 @@ module EventMachine
           @handler.send_text_frame(data)
         else
           raise WebSocketError, "Cannot send data before onopen callback"
+        end
+      end
+
+      # Send a ping to the client. The client must respond with a pong.
+      #
+      # In the case that the client is running a WebSocket draft < 01, false
+      # is returned since ping & pong are not supported
+      #
+      def ping(body = '')
+        if @handler
+          @handler.pingable? ? @handler.send_frame(:ping, body) && true : false
+        else
+          raise WebSocketError, "Cannot ping before onopen callback"
+        end
+      end
+
+      # Send an unsolicited pong message, as allowed by the protocol. The
+      # client is not expected to respond to this message.
+      #
+      # em-websocket automatically takes care of sending pong replies to
+      # incoming ping messages, as the protocol demands.
+      #
+      def pong(body = '')
+        if @handler
+          @handler.pingable? ? @handler.send_frame(:pong, body) && true : false
+        else
+          raise WebSocketError, "Cannot ping before onopen callback"
+        end
+      end
+
+      # Test whether the connection is pingable (i.e. the WebSocket draft in
+      # use is >= 01)
+      def pingable?
+        if @handler
+          @handler.pingable?
+        else
+          raise WebSocketError, "Cannot test whether pingable before onopen callback"
         end
       end
 
