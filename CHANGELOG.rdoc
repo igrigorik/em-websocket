@@ -1,5 +1,11 @@
 = Changelog
 
+== 0.3.6 / 2011-12-23
+
+- new features:
+  - Supports sending ping & pong messages
+  - Supports binding to received ping & pong messages
+
 == 0.3.5 / 2011-10-24
 
 - new features:
