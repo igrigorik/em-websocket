@@ -1,6 +1,6 @@
 require 'helper'
 
-# These tests are not specifi to any particular draft of the specification
+# These tests are not specific to any particular draft of the specification
 # 
 describe "WebSocket server" do
   include EM::SpecHelper

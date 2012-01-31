@@ -1,5 +1,7 @@
 # encoding: UTF-8
 
+# These tests are run against all draft versions
+#
 shared_examples_for "a websocket server" do
   it "should call onerror if an application error raised in onopen" do
     em {
@@ -57,6 +59,41 @@ shared_examples_for "a websocket server" do
           EM.add_timer(0.1) {
             client.close_connection
           }
+        }
+      }
+    }
+  end
+
+  it "should close the connection when a too long frame is sent" do
+    em {
+      start_server { |server|
+        server.max_frame_size = 20
+
+        server.onerror { |e|
+          # 3: Error should be reported to server
+          e.class.should == EventMachine::WebSocket::WSMessageTooBigError
+          e.message.should =~ /Frame length too long/
+        }
+      }
+
+      start_client { |client|
+        client.onopen {
+          EM.next_tick {
+            client.send("This message is longer than 20 characters")
+          }
+
+        }
+
+        client.onmessage { |msg|
+          # 4: This is actually the close message. Really need to use a real
+          # WebSocket client in these tests...
+          done
+        }
+
+        client.onclose {
+          # 4: Drafts 75 & 76 don't send a close message, they just close the
+          # connection
+          done
         }
       }
     }

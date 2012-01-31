@@ -5,7 +5,7 @@ module EventMachine
     class Connection < EventMachine::Connection
       include Debugger
 
-      DEFAULT_MAX_FRAME_SIZE = 10 * 1024 * 1024
+      attr_writer :max_frame_size
 
       # define WebSocket callbacks
       def onopen(&blk);     @onopen = blk;    end
@@ -195,8 +195,16 @@ module EventMachine
         @handler ? @handler.state : :handshake
       end
 
+      # Returns the maximum frame size which this connection is configured to
+      # accept. This can be set globally or on a per connection basis, and
+      # defaults to a value of 10MB if not set.
+      #
+      # The behaviour when a too large frame is received varies by protocol,
+      # but in the newest protocols the connection will be closed with the
+      # correct close code (1009) immediately after receiving the frame header
+      #
       def max_frame_size
-        DEFAULT_MAX_FRAME_SIZE
+        @max_frame_size || WebSocket.max_frame_size
       end
 
       private
