@@ -5,6 +5,8 @@ module EventMachine
     class Connection < EventMachine::Connection
       include Debugger
 
+      DEFAULT_MAX_FRAME_SIZE = 10 * 1024 * 1024
+
       # define WebSocket callbacks
       def onopen(&blk);     @onopen = blk;    end
       def onclose(&blk);    @onclose = blk;   end
@@ -191,6 +193,10 @@ module EventMachine
 
       def state
         @handler ? @handler.state : :handshake
+      end
+
+      def max_frame_size
+        DEFAULT_MAX_FRAME_SIZE
       end
 
       private
