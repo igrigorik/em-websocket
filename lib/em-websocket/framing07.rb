@@ -83,7 +83,7 @@ module EventMachine
           frame_type = opcode_to_type(opcode)
 
           if frame_type == :continuation && !@frame_type
-            raise WebSocketError, 'Continuation frame not expected'
+            raise WSProtocolError, 'Continuation frame not expected'
           end
 
           if !fin
@@ -158,7 +158,7 @@ module EventMachine
       end
 
       def opcode_to_type(opcode)
-        FRAME_TYPES_INVERSE[opcode] || raise(DataError, "Unknown opcode")
+        FRAME_TYPES_INVERSE[opcode] || raise(WSProtocolError, "Unknown opcode")
       end
 
       def data_frame?(type)

@@ -59,7 +59,7 @@ module EventMachine
 
           # Addition to the spec to protect against malicious requests
           if payload_length > MAXIMUM_FRAME_LENGTH
-            raise DataError, "Frame length too long (#{payload_length} bytes)"
+            raise WSMessageTooBigError, "Frame length too long (#{payload_length} bytes)"
           end
 
           # Check buffer size
@@ -78,7 +78,7 @@ module EventMachine
           frame_type = opcode_to_type(opcode)
 
           if frame_type == :continuation && !@frame_type
-            raise WebSocketError, 'Continuation frame not expected'
+            raise WSProtocolError, 'Continuation frame not expected'
           end
 
           if more
@@ -156,7 +156,7 @@ module EventMachine
       end
 
       def opcode_to_type(opcode)
-        FRAME_TYPES_INVERSE[opcode] || raise(DataError, "Unknown opcode")
+        FRAME_TYPES_INVERSE[opcode] || raise(WSProtocolError, "Unknown opcode")
       end
 
       def data_frame?(type)

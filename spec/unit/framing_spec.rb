@@ -240,11 +240,11 @@ describe EM::WebSocket::Framing07 do
   end
 
   describe "other tests" do
-    it "should raise a DataError if an invalid frame type is requested" do
+    it "should raise a WSProtocolError if an invalid frame type is requested" do
       lambda {
         # Opcode 3 is not supported by this draft
         @f << "\x83\x05Hello"
-      }.should raise_error(EventMachine::WebSocket::DataError, "Unknown opcode")
+      }.should raise_error(EventMachine::WebSocket::WSProtocolError, "Unknown opcode")
     end
 
     it "should accept a fragmented unmasked text message in 3 frames" do

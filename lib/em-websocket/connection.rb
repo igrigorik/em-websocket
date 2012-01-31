@@ -75,10 +75,10 @@ module EventMachine
         trigger_on_error(e)
         # Errors during the handshake require the connection to be aborted
         abort
-      rescue WebSocketError => e
+      rescue WSProtocolError => e
         debug [:error, e]
         trigger_on_error(e)
-        close_websocket_private(1002) # 1002 indicates a protocol error
+        close_websocket_private(e.code)
       rescue => e
         debug [:error, e]
         # These are application errors - raise unless onerror defined

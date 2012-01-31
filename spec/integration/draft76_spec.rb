@@ -140,7 +140,7 @@ describe "WebSocket server draft76" do
     em {
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |server|
         server.onerror { |error|
-          error.should be_an_instance_of EM::WebSocket::DataError
+          error.should be_an_instance_of EM::WebSocket::WSMessageTooBigError
           error.message.should == "Frame length too long (1180591620717411303296 bytes)"
           done
         }
@@ -164,7 +164,7 @@ describe "WebSocket server draft76" do
     em {
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |server|
         server.onerror { |error|
-          error.should be_an_instance_of EM::WebSocket::DataError
+          error.should be_an_instance_of EM::WebSocket::WSProtocolError
           error.message.should == "Invalid frame received"
           done
         }

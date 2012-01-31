@@ -12,7 +12,7 @@ module EventMachine
             nil
           when 1
             # Illegal close frame
-            raise DataError, "Close frames with a body must contain a 2 byte status code"
+            raise WSProtocolError, "Close frames with a body must contain a 2 byte status code"
           else
             application_data.slice!(0, 2).unpack('n').first
           end

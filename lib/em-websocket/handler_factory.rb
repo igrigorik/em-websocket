@@ -99,7 +99,7 @@ module EventMachine
           Handler13.new(connection, request, debug)
         else
           # According to spec should abort the connection
-          raise WebSocketError, "Protocol version #{version} not supported"
+          raise HandshakeError, "Protocol version #{version} not supported"
         end
       end
     end
