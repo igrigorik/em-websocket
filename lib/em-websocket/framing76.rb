@@ -3,11 +3,6 @@
 module EventMachine
   module WebSocket
     module Framing76
-      
-      # Set the max frame lenth to very high value (10MB) until there is a
-      # limit specified in the spec to protect against malicious attacks
-      MAXIMUM_FRAME_LENGTH = 10 * 1024 * 1024
-      
       def initialize_framing
         @data = ''
       end
@@ -40,8 +35,7 @@ module EventMachine
               break unless (b & 0x80) == 0x80
             end
 
-            # Addition to the spec to protect against malicious requests
-            if length > MAXIMUM_FRAME_LENGTH
+            if length > @connection.max_frame_size
               raise WSMessageTooBigError, "Frame length too long (#{length} bytes)"
             end
 
@@ -73,7 +67,7 @@ module EventMachine
             end
 
             # Addition to the spec to protect against malicious requests
-            if @data.size > MAXIMUM_FRAME_LENGTH
+            if @data.size > @connection.max_frame_size
               raise WSMessageTooBigError, "Frame length too long (#{@data.size} bytes)"
             end
 

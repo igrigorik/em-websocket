@@ -38,5 +38,10 @@ module EventMachine
       puts "Terminating WebSocket Server"
       EventMachine.stop
     end
+
+    class << self
+      attr_accessor :max_frame_size
+    end
+    @max_frame_size = 10 * 1024 * 1024 # 10MB
   end
 end

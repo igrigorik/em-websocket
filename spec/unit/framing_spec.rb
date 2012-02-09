@@ -4,6 +4,13 @@ describe EM::WebSocket::Framing03 do
   class FramingContainer
     include EM::WebSocket::Framing03
     
+    def initialize
+      @connection = Object.new
+      def @connection.max_frame_size
+        1000000
+      end
+    end
+
     def <<(data)
       @data << data
       process_data(data)
@@ -122,6 +129,13 @@ describe EM::WebSocket::Framing04 do
   class FramingContainer04
     include EM::WebSocket::Framing04
 
+    def initialize
+      @connection = Object.new
+      def @connection.max_frame_size
+        1000000
+      end
+    end
+
     def <<(data)
       @data << data
       process_data(data)
@@ -183,6 +197,13 @@ end
 describe EM::WebSocket::Framing07 do
   class FramingContainer07
     include EM::WebSocket::Framing07
+
+    def initialize
+      @connection = Object.new
+      def @connection.max_frame_size
+        1000000
+      end
+    end
 
     def <<(data)
       @data << data

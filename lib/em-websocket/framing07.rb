@@ -59,6 +59,10 @@ module EventMachine
           frame_length = pointer + payload_length
           frame_length += 4 if mask
 
+          if frame_length > @connection.max_frame_size
+            raise WSMessageTooBigError, "Frame length too long (#{frame_length} bytes)"
+          end
+
           # Check buffer size
           if @data.getbyte(frame_length - 1) == nil
             debug [:buffer_incomplete, @data]

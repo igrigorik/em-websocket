@@ -107,6 +107,7 @@ class Draft75WebSocketClient
     @ws.errback { @onerror.call if @onerror }
     @ws.callback { @onopen.call if @onopen }
     @ws.stream { |msg| @onmessage.call(msg) if @onmessage }
+    @ws.disconnect { @onclose.call if @onclose }
   end
 
   def send(message)
