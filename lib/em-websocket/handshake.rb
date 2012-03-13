@@ -1,0 +1,116 @@
+require "http/parser"
+
+module EventMachine
+  module WebSocket
+
+    # Resposible for creating the server handshake response
+    class Handshake
+      include EM::Deferrable
+
+      # Unfortunately drafts 75 & 76 require knowledge of whether the
+      # connection is being terminated as ws/wss in order to generate the
+      # correct handshake response
+      def initialize(secure)
+        @parser = Http::Parser.new
+        @secure = secure
+
+        @parser.on_headers_complete = proc { |headers|
+          @headers = Hash[headers.map { |k,v| [k.downcase, v] }]
+        }
+      end
+
+      def receive_data(data)
+        @parser << data
+
+        if @headers
+          process(@headers, @parser.upgrade_data)
+        end
+      rescue HTTP::Parser::Error => e
+        fail(HandshakeError.new("Invalid HTTP header"))
+      end
+
+      private
+
+      def process(headers, remains)
+        # Validate Upgrade
+        unless @parser.upgrade? && @headers['upgrade'].downcase == 'websocket'
+          raise HandshakeError, "Connection and Upgrade headers required"
+        end
+
+        # Determine version heuristically
+        version = if @headers['sec-websocket-version']
+          # Used from drafts 04 onwards
+          @headers['sec-websocket-version'].to_i
+        elsif @headers['sec-websocket-draft']
+          # Used in drafts 01 - 03
+          @headers['sec-websocket-draft'].to_i
+        elsif @headers['sec-websocket-key1']
+          76
+        else
+          75
+        end
+
+        # Additional handling of bytes after the header if required
+        case version
+        when 75
+          if !remains.empty?
+            raise HandshakeError, "Extra bytes after header"
+          end
+        when 76, 1..3
+          if remains.length < 8
+            # The whole third-key has not been received yet.
+            return nil
+          elsif remains.length > 8
+            raise HandshakeError, "Extra bytes after third key"
+          end
+          @headers['third-key'] = remains
+        end
+
+        handshake_klass = case version
+        when 75
+          Handshake75
+        when 76, 1..3
+          Handshake76
+        when 5, 6, 7, 8, 13
+          Handshake04
+        else
+          # According to spec should abort the connection
+          raise HandshakeError, "Protocol version #{version} not supported"
+        end
+
+        handshake_response = handshake_klass.handshake(@headers, @parser.request_url, @secure)
+
+        handler_klass = case version
+        when 75
+          Handler75
+        when 76
+          Handler76
+        when 1..3
+          # We'll use handler03 - I believe they're all compatible
+          Handler03
+        when 5
+          Handler05
+        when 6
+          Handler06
+        when 7
+          Handler07
+        when 8
+          # drafts 9, 10, 11 and 12 should never change the version
+          # number as they are all the same as version 08.
+          Handler08
+        when 13
+          # drafts 13 to 17 all identify as version 13 as they are
+          # only minor changes or text changes.
+          Handler13
+        else
+          # According to spec should abort the connection
+          raise HandshakeError, "Protocol version #{version} not supported"
+        end
+
+        succeed(handshake_response, handler_klass)
+      rescue HandshakeError => e
+        fail(e)
+      end
+    end
+  end
+end
