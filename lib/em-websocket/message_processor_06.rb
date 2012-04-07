@@ -29,7 +29,6 @@ module EventMachine
             # The connection is considered closed
             send_frame(:close, '')
             @state = :closed
-            @connection.close_connection_after_writing
             # TODO: Send close status code and body to app code
           end
         when :ping
