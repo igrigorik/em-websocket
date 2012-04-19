@@ -138,6 +138,13 @@ describe "EventMachine::WebSocket::Handler" do
     }.should raise_error(EM::WebSocket::HandshakeError, 'Invalid Key "12998 5 Y3 1.P00"')
   end
 
+  it "should raise error if the HTTP header is empty" do
+    connection = Object.new
+    lambda {
+      EM::WebSocket::HandlerFactory.build(connection, "\r\n\r\nfoobar", false)
+    }.should raise_error(EM::WebSocket::HandshakeError, "Empty HTTP header")
+  end
+
   it "should leave request with incomplete header" do
     data = format_request(@request)
     # Sends only half of the request
