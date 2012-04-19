@@ -15,6 +15,8 @@ module EventMachine
 
         lines = header.split("\r\n")
 
+        raise HandshakeError, "Empty HTTP header" unless lines.size > 0
+
         # extract request path
         first_line = lines.shift.match(PATH)
         raise HandshakeError, "Invalid HTTP header" unless first_line
