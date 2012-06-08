@@ -124,5 +124,23 @@ shared_examples_for "a websocket server" do
         start_client { }
       }
     end
+
+    it "should not change the encoding of strings sent to send [antiregression]" do
+      em {
+        start_server { |server|
+          server.onopen {
+            s = "example string"
+            s.force_encoding("UTF-8")
+
+            server.send(s)
+
+            s.encoding.should == Encoding.find("UTF-8")
+            done
+          }
+        }
+
+        start_client { }
+      }
+    end
   end
 end
