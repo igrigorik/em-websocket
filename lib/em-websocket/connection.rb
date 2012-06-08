@@ -134,6 +134,11 @@ module EventMachine
       UTF8 = Encoding.find("UTF-8") if ENCODING_SUPPORTED
       BINARY = Encoding.find("BINARY") if ENCODING_SUPPORTED
 
+      # Send a WebSocket text frame.
+      #
+      # A WebSocketError may be raised if the connection is in an opening or a
+      # closing state, or if the passed in data is not valid UTF-8
+      #
       def send(data)
         # If we're using Ruby 1.9, be pedantic about encodings
         if ENCODING_SUPPORTED
