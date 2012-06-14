@@ -40,7 +40,7 @@ module EventMachine
         @options = options
         @debug = options[:debug] || false
         @secure = options[:secure] || false
-        @secure_proxy options[:secure_proxy] || false
+        @secure_proxy = options[:secure_proxy] || false
         @tls_options = options[:tls_options] || {}
         @data = ''
 
