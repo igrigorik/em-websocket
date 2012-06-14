@@ -4,7 +4,7 @@ module EventMachine
       PATH   = /^(\w+) (\/[^\s]*) HTTP\/1\.1$/
       HEADER = /^([^:]+):\s*(.+)$/
 
-      def self.build(connection, data, secure = false, debug = false)
+      def self.build(connection, data, secure = false, secure_proxy = false, debug = false)
         (header, remains) = data.split("\r\n\r\n", 2)
         unless remains
           # The whole header has not been received yet.
@@ -35,10 +35,10 @@ module EventMachine
           request[h[1].strip.downcase] = h[2].strip if h
         end
 
-        build_with_request(connection, request, remains, secure, debug)
+        build_with_request(connection, request, remains, secure, secure_proxy, debug)
       end
 
-      def self.build_with_request(connection, request, remains, secure = false, debug = false)
+      def self.build_with_request(connection, request, remains, secure = false, secure_proxy = false, debug = false)
         # Determine version heuristically
         version = if request['sec-websocket-version']
           # Used from drafts 04 onwards
@@ -74,7 +74,7 @@ module EventMachine
         end
 
         # transform headers
-        protocol = (secure ? "wss" : "ws")
+        protocol = ((secure || secure_proxy) ? "wss" : "ws")
         request['host'] = Addressable::URI.parse("#{protocol}://"+request['host'])
 
         case version

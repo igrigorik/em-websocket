@@ -40,6 +40,7 @@ module EventMachine
         @options = options
         @debug = options[:debug] || false
         @secure = options[:secure] || false
+        @secure_proxy options[:secure_proxy] || false
         @tls_options = options[:tls_options] || {}
         @data = ''
 
@@ -107,7 +108,7 @@ module EventMachine
         else
           debug [:inbound_headers, data]
           @data << data
-          @handler = HandlerFactory.build(self, @data, @secure, @debug)
+          @handler = HandlerFactory.build(self, @data, @secure, @secure_proxy, @debug)
           unless @handler
             # The whole header has not been received yet.
             return false
