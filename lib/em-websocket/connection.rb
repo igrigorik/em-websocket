@@ -108,7 +108,7 @@ module EventMachine
         else
           debug [:inbound_headers, data]
           @data << data
-          @handler = HandlerFactory.build(self, @data, @secure, @secure_proxy, @debug)
+          @handler = HandlerFactory.build(self, @data, @secure || @secure_proxy, @debug)
           unless @handler
             # The whole header has not been received yet.
             return false
