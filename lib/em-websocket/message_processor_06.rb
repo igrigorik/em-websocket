@@ -20,8 +20,8 @@ module EventMachine
           debug [:close_frame_received, status_code, application_data]
           
           if @state == :closing
-            # We can close connection immediately since there is no more data
-            # is allowed to be sent or received on this connection
+            # We can close connection immediately since no more data may be
+            # sent or received on this connection
             @connection.close_connection
             @state = :closed
           else
