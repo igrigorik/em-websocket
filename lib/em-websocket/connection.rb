@@ -105,8 +105,8 @@ module EventMachine
               debug [:upgrade_response, upgrade_response]
               self.send_data(upgrade_response)
               @handler = handler_klass.new(self, @debug)
-              trigger_on_open(@handshake)
               @handshake = nil
+              trigger_on_open(handshake)
             }
 
             handshake.errback { |e|
@@ -205,10 +205,6 @@ module EventMachine
         else
           raise WebSocketError, "Cannot test whether pingable before onopen callback"
         end
-      end
-
-      def request
-        @handler ? @handler.request : {}
       end
 
       def state

@@ -7,6 +7,8 @@ module EventMachine
     class Handshake
       include EM::Deferrable
 
+      attr_reader :parser
+
       # Unfortunately drafts 75 & 76 require knowledge of whether the
       # connection is being terminated as ws/wss in order to generate the
       # correct handshake response
@@ -27,6 +29,41 @@ module EventMachine
         end
       rescue HTTP::Parser::Error => e
         fail(HandshakeError.new("Invalid HTTP header"))
+      end
+
+      # Returns the WebSocket upgrade headers as a hash.
+      #
+      # Keys are strings, unmodified from the request.
+      #
+      def headers
+        @parser.headers
+      end
+
+      # The same as headers, except that the hash keys are downcased
+      #
+      def headers_downcased
+        @headers
+      end
+
+      # Returns the request path (excluding any query params)
+      #
+      def path
+        @parser.request_path
+      end
+
+      # Returns the query params as a string foo=bar&baz=...
+      def query_string
+        @parser.query_string
+      end
+
+      def query
+        Hash[*query_string.split(/&|=/)]
+      end
+
+      # Returns the WebSocket origin header if provided
+      #
+      def origin
+        @headers["origin"] || @headers["sec-websocket-origin"] || nil
       end
 
       private
