@@ -1,5 +1,16 @@
 = Changelog
 
+== 0.3.7 / 2012-07-11
+
+- new features:
+  - Supports sending 1009 error code when incoming frame is too large to handle, and added associated exception class WSMessageTooBigError [Martyn Loughran]
+  - Supports overriding the maximum frame size by setting the max_frame_size accessor on the connection object (in bytes). Default unchanged at 10MB. [Martyn Loughran]
+
+- bug fixes:
+  - Fixes some encoding issues on Ruby 1.9 [Dingding Ye]
+  - Raises a HandshakeError if WS header is empty [Markus Fenske]
+  - Connection#send would mutate passed string to BINARY encoding. The fix still mutates the string by forcing the encoding back to UTF-8 before returning, but if the passed string was encoded as UTF-8 this is equivalent [Martyn Loughran]
+
 == 0.3.6 / 2011-12-23
 
 - new features:
