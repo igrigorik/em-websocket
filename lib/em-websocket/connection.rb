@@ -129,16 +129,26 @@ module EventMachine
         close_connection_after_writing
       end
 
+      # Cache encodings since it's moderately expensive to look them up each time
+      ENCODING_SUPPORTED = "string".respond_to?(:force_encoding)
+      UTF8 = Encoding.find("UTF-8") if ENCODING_SUPPORTED
+      BINARY = Encoding.find("BINARY") if ENCODING_SUPPORTED
+
+      # Send a WebSocket text frame.
+      #
+      # A WebSocketError may be raised if the connection is in an opening or a
+      # closing state, or if the passed in data is not valid UTF-8
+      #
       def send(data)
         # If we're using Ruby 1.9, be pedantic about encodings
-        if data.respond_to?(:force_encoding)
+        if ENCODING_SUPPORTED
           # Also accept ascii only data in other encodings for convenience
-          unless (data.encoding == Encoding.find("UTF-8") && data.valid_encoding?) || data.ascii_only?
+          unless (data.encoding == UTF8 && data.valid_encoding?) || data.ascii_only?
             raise WebSocketError, "Data sent to WebSocket must be valid UTF-8 but was #{data.encoding} (valid: #{data.valid_encoding?})"
           end
           # This labels the encoding as binary so that it can be combined with
           # the BINARY framing
-          data.force_encoding("BINARY")
+          data.force_encoding(BINARY)
         else
           # TODO: Check that data is valid UTF-8
         end
@@ -148,6 +158,10 @@ module EventMachine
         else
           raise WebSocketError, "Cannot send data before onopen callback"
         end
+
+        # Revert data back to the original encoding (which we assume is UTF-8)
+        # Doing this to avoid duping the string - there may be a better way
+        data.force_encoding(UTF8)
       end
 
       # Send a ping to the client. The client must respond with a pong.
