@@ -161,7 +161,8 @@ module EventMachine
 
         # Revert data back to the original encoding (which we assume is UTF-8)
         # Doing this to avoid duping the string - there may be a better way
-        data.force_encoding(UTF8)
+        data.force_encoding(UTF8) if ENCODING_SUPPORTED
+        return nil
       end
 
       # Send a ping to the client. The client must respond with a pong.

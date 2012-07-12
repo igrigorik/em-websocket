@@ -29,7 +29,8 @@ module EventMachine
       end
 
       def getbytes(start_index, count)
-        data = ''.force_encoding('ASCII-8BIT')
+        data = ''
+        data.force_encoding('ASCII-8BIT') if data.respond_to?(:force_encoding)
         count.times do |i|
           data << getbyte(start_index + i)
         end
