@@ -103,7 +103,10 @@ class Draft75WebSocketClient
   def onmessage(&blk);  @onmessage = blk; end
 
   def initialize
-    @ws = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get(:timeout => 0)
+    @ws = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get({
+      :timeout => 0,
+      :origin => 'http://example.com',
+    })
     @ws.errback { @onerror.call if @onerror }
     @ws.callback { @onopen.call if @onopen }
     @ws.stream { |msg| @onmessage.call(msg) if @onmessage }
