@@ -1,5 +1,10 @@
 = Changelog
 
+== 0.3.8 / 2012-07-12
+
+- bug fixes:
+  - Fixed support for Ruby 1.8.7 which was broken in 0.3.7
+
 == 0.3.7 / 2012-07-11
 
 - new features:
