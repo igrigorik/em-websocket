@@ -133,8 +133,23 @@ def format_response(r)
   data
 end
 
-RSpec::Matchers.define :send_handshake do |response|
+RSpec::Matchers.define :succeed_with_upgrade do |response|
   match do |actual|
-    actual.handshake.lines.sort == format_response(response).lines.sort
+    success = nil
+    actual.callback { |upgrade_response, handler_klass|
+      success = (upgrade_response.lines.sort == format_response(response).lines.sort)
+    }
+    success
+  end
+end
+
+RSpec::Matchers.define :fail_with_error do |error_klass, error_message|
+  match do |actual|
+    success = nil
+    actual.errback { |e|
+      success = (e.class == error_klass)
+      success &= (e.message == error_message) if error_message
+    }
+    success
   end
 end

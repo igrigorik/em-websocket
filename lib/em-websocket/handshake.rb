@@ -69,6 +69,10 @@ module EventMachine
       private
 
       def process(headers, remains)
+        unless @parser.http_method == "GET"
+          raise HandshakeError, "Must be GET request"
+        end
+
         # Validate Upgrade
         unless @parser.upgrade? && @headers['upgrade'].downcase == 'websocket'
           raise HandshakeError, "Connection and Upgrade headers required"
