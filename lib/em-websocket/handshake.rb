@@ -7,7 +7,7 @@ module EventMachine
     class Handshake
       include EM::Deferrable
 
-      attr_reader :parser
+      attr_reader :parser, :protocol_version
 
       # Unfortunately drafts 75 & 76 require knowledge of whether the
       # connection is being terminated as ws/wss in order to generate the
@@ -119,6 +119,7 @@ module EventMachine
 
         handler_klass = Handler.klass_factory(version)
 
+        @protocol_version = version
         succeed(upgrade_response, handler_klass)
       rescue HandshakeError => e
         fail(e)

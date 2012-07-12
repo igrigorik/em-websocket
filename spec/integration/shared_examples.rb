@@ -3,6 +3,19 @@
 # These tests are run against all draft versions
 #
 shared_examples_for "a websocket server" do
+  it "should expose the protocol version" do
+    em {
+      start_server { |ws|
+        ws.onopen { |handshake|
+          handshake.protocol_version.should == version
+          done
+        }
+      }
+
+      start_client
+    }
+  end
+
   it "should call onerror if an application error raised in onopen" do
     em {
       start_server { |ws|

@@ -102,6 +102,7 @@ module EventMachine
             handshake = Handshake.new(@secure)
 
             handshake.callback { |upgrade_response, handler_klass|
+              debug [:accepting_ws_version, handshake.protocol_version]
               debug [:upgrade_response, upgrade_response]
               self.send_data(upgrade_response)
               @handler = handler_klass.new(self, @debug)
