@@ -8,20 +8,20 @@ describe "WebSocket server" do
 
   it "should fail on non WebSocket requests" do
     em {
-      EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('http://127.0.0.1:12345/').get :timeout => 0
+      EM.add_timer(0.1) do
+        http = EM::HttpRequest.new('http://127.0.0.1:12345/').get :timeout => 0
         http.errback { done }
         http.callback { fail }
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) {}
+      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) {}
     }
   end
   
-  it "should populate ws.request with appropriate headers" do
+  it "should expose the WebSocket request headers, path and query params" do
     em {
-      EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
+      EM.add_timer(0.1) do
+        http = EM::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
         http.errback { fail }
         http.callback {
           http.response_header.status.should == 101
@@ -30,7 +30,7 @@ describe "WebSocket server" do
         http.stream { |msg| }
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
+      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen { |handshake|
           headers = handshake.headers
           headers["User-Agent"].should == "EventMachine HttpClient"
@@ -38,20 +38,21 @@ describe "WebSocket server" do
           headers["Upgrade"].should == "WebSocket"
           headers["Host"].to_s.should == "127.0.0.1:12345"
           handshake.path.should == "/"
+          handshake.query.should == {}
           handshake.origin.should == "127.0.0.1"
         }
         ws.onclose {
           ws.state.should == :closed
-          EventMachine.stop
+          done
         }
       end
     }
   end
   
-  it "should allow sending and retrieving query string args passed in on the connection request." do
+  it "should expose the WebSocket path and query params when nonempty" do
     em {
-      EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get({
+      EM.add_timer(0.1) do
+        http = EM::HttpRequest.new('ws://127.0.0.1:12345/hello').get({
           :query => {'foo' => 'bar', 'baz' => 'qux'},
           :timeout => 0
         })
@@ -63,40 +64,15 @@ describe "WebSocket server" do
         http.stream { |msg| }
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
+      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen { |handshake|
-          handshake.path.should == '/'
+          handshake.path.should == '/hello'
           handshake.query_string.should == "foo=bar&baz=qux"
           handshake.query.should == {"foo"=>"bar", "baz"=>"qux"}
         }
         ws.onclose {
           ws.state.should == :closed
-          EventMachine.stop
-        }
-      end
-    }
-  end
-  
-  it "should ws.response['Query'] to empty hash when no query string params passed in connection URI" do
-    em {
-      EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get(:timeout => 0)
-        http.errback { fail }
-        http.callback {
-          http.response_header.status.should == 101
-          http.close_connection
-        }
-        http.stream { |msg| }
-      end
-
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
-        ws.onopen { |handshake|
-          handshake.path.should == "/"
-          handshake.query.should == {}
-        }
-        ws.onclose {
-          ws.state.should == :closed
-          EventMachine.stop
+          done
         }
       end
     }
@@ -104,17 +80,17 @@ describe "WebSocket server" do
   
   it "should raise an exception if frame sent before handshake complete" do
     em {
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |c|
-        # We're not using a real client so the handshake will not be sent
-        EM.add_timer(0.1) {
-          lambda {
-            c.send('early message')
-          }.should raise_error('Cannot send data before onopen callback')
-          done
-        }
+      # 1. Start WebSocket server
+      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+        # 3. Try to send a message to the socket
+        lambda {
+          ws.send('early message')
+        }.should raise_error('Cannot send data before onopen callback')
+        done
       }
 
-      client = EM.connect('0.0.0.0', 12345, EM::Connection)
+      # 2. Connect a dumb TCP connection (will not send handshake)
+      EM.connect('0.0.0.0', 12345, EM::Connection)
     }
   end
 end
