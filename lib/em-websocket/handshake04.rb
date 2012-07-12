@@ -4,7 +4,7 @@ require 'base64'
 module EventMachine
   module WebSocket
     module Handshake04
-      def self.handshake(headers, _, _)
+      def self.handshake(headers, _, __)
         # Required
         unless key = headers['sec-websocket-key']
           raise HandshakeError, "sec-websocket-key header is required"

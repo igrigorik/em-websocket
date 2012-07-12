@@ -67,7 +67,8 @@ describe "WebSocket server" do
       EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen { |handshake|
           handshake.path.should == '/hello'
-          handshake.query_string.should == "foo=bar&baz=qux"
+          handshake.query_string.split('&').sort.
+            should == ["baz=qux", "foo=bar"]
           handshake.query.should == {"foo"=>"bar", "baz"=>"qux"}
         }
         ws.onclose {
