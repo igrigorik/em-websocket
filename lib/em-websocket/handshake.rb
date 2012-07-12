@@ -115,36 +115,11 @@ module EventMachine
           raise HandshakeError, "Protocol version #{version} not supported"
         end
 
-        handshake_response = handshake_klass.handshake(@headers, @parser.request_url, @secure)
+        upgrade_response = handshake_klass.handshake(@headers, @parser.request_url, @secure)
 
-        handler_klass = case version
-        when 75
-          Handler75
-        when 76
-          Handler76
-        when 1..3
-          # We'll use handler03 - I believe they're all compatible
-          Handler03
-        when 5
-          Handler05
-        when 6
-          Handler06
-        when 7
-          Handler07
-        when 8
-          # drafts 9, 10, 11 and 12 should never change the version
-          # number as they are all the same as version 08.
-          Handler08
-        when 13
-          # drafts 13 to 17 all identify as version 13 as they are
-          # only minor changes or text changes.
-          Handler13
-        else
-          # According to spec should abort the connection
-          raise HandshakeError, "Protocol version #{version} not supported"
-        end
+        handler_klass = Handler.klass_factory(version)
 
-        succeed(handshake_response, handler_klass)
+        succeed(upgrade_response, handler_klass)
       rescue HandshakeError => e
         fail(e)
       end
