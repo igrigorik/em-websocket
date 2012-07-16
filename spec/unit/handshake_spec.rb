@@ -1,11 +1,12 @@
 require 'helper'
 
-describe "EventMachine::WebSocket::Handler" do
-  def handler(request, secure = false)
-    connection = Object.new
-    EM::WebSocket::HandlerFactory.build(connection, format_request(request), secure)
+describe EM::WebSocket::Handshake do
+  def handshake(request, secure = false)
+    handshake = EM::WebSocket::Handshake.new(secure)
+    handshake.receive_data(format_request(request))
+    handshake
   end
-
+  
   before :each do
     @request = {
       :port => 80,
@@ -36,47 +37,51 @@ describe "EventMachine::WebSocket::Handler" do
     }
     @secure_response = @response.merge(:headers => @response[:headers].merge('Sec-WebSocket-Location' => "wss://example.com/demo"))
   end
-
+  
   it "should handle good request" do
-    handler(@request).should send_handshake(@response)
+    handshake(@request).should succeed_with_upgrade(@response)
   end
-
+  
   it "should handle good request to secure default port if secure mode is enabled" do
-    handler(@secure_request, true).should send_handshake(@secure_response)
+    handshake(@secure_request, true).
+      should succeed_with_upgrade(@secure_response)
   end
-
+  
   it "should not handle good request to secure default port if secure mode is disabled" do
-    handler(@secure_request, false).should_not send_handshake(@secure_response)
+    handshake(@secure_request, false).
+      should_not succeed_with_upgrade(@secure_response)
   end
-
+  
   it "should handle good request on nondefault port" do
     @request[:port] = 8081
     @request[:headers]['Host'] = 'example.com:8081'
     @response[:headers]['Sec-WebSocket-Location'] =
       'ws://example.com:8081/demo'
 
-    handler(@request).should send_handshake(@response)
+    handshake(@request).should succeed_with_upgrade(@response)
   end
-
+  
   it "should handle good request to secure nondefault port" do
     @secure_request[:port] = 8081
     @secure_request[:headers]['Host'] = 'example.com:8081'
     @secure_response[:headers]['Sec-WebSocket-Location'] = 'wss://example.com:8081/demo'
-    handler(@secure_request, true).should send_handshake(@secure_response)
+    
+    handshake(@secure_request, true).
+      should succeed_with_upgrade(@secure_response)
   end
-
+  
   it "should handle good request with no protocol" do
     @request[:headers].delete('Sec-WebSocket-Protocol')
     @response[:headers].delete("Sec-WebSocket-Protocol")
 
-    handler(@request).should send_handshake(@response)
+    handshake(@request).should succeed_with_upgrade(@response)
   end
-
+  
   it "should handle extra headers by simply ignoring them" do
     @request[:headers]['EmptyValue'] = ""
     @request[:headers]['AKey'] = "AValue"
 
-    handler(@request).should send_handshake(@response)
+    handshake(@request).should succeed_with_upgrade(@response)
   end
   
   it "should raise error on HTTP request" do
@@ -91,69 +96,79 @@ describe "EventMachine::WebSocket::Handler" do
       'Connection' => 'keep-alive',
     }
     
-    lambda {
-      handler(@request).handshake
-    }.should raise_error(EM::WebSocket::HandshakeError)
+    handshake(@request).should fail_with_error(EM::WebSocket::HandshakeError)
   end
-
+  
   it "should raise error on wrong method" do
     @request[:method] = 'POST'
 
-    lambda {
-      handler(@request).handshake
-    }.should raise_error(EM::WebSocket::HandshakeError)
+    handshake(@request).should fail_with_error(EM::WebSocket::HandshakeError)
   end
-
+  
   it "should raise error if upgrade header incorrect" do
     @request[:headers]['Upgrade'] = 'NonWebSocket'
 
-    lambda {
-      handler(@request).handshake
-    }.should raise_error(EM::WebSocket::HandshakeError)
+    handshake(@request).should fail_with_error(EM::WebSocket::HandshakeError)
   end
-
+  
   it "should raise error if Sec-WebSocket-Protocol is empty" do
     @request[:headers]['Sec-WebSocket-Protocol'] = ''
 
-    lambda {
-      handler(@request).handshake
-    }.should raise_error(EM::WebSocket::HandshakeError)
+    handshake(@request).should fail_with_error(EM::WebSocket::HandshakeError)
   end
-
+  
   %w[Sec-WebSocket-Key1 Sec-WebSocket-Key2].each do |header|
     it "should raise error if #{header} has zero spaces" do
       @request[:headers][header] = 'nospaces'
 
-      lambda {
-        handler(@request).handshake
-      }.should raise_error(EM::WebSocket::HandshakeError, 'Websocket Key1 or Key2 does not contain spaces - this is a symptom of a cross-protocol attack')
+      handshake(@request).
+        should fail_with_error(EM::WebSocket::HandshakeError, 'Websocket Key1 or Key2 does not contain spaces - this is a symptom of a cross-protocol attack')
     end
   end
-
+  
   it "should raise error if spaces do not divide numbers in Sec-WebSocket-Key* " do
     @request[:headers]['Sec-WebSocket-Key2'] = '12998 5 Y3 1.P00'
 
-    lambda {
-      handler(@request).handshake
-    }.should raise_error(EM::WebSocket::HandshakeError, 'Invalid Key "12998 5 Y3 1.P00"')
+    handshake(@request).
+      should fail_with_error(EM::WebSocket::HandshakeError, 'Invalid Key "12998 5 Y3 1.P00"')
   end
-
+  
   it "should raise error if the HTTP header is empty" do
-    connection = Object.new
-    lambda {
-      EM::WebSocket::HandlerFactory.build(connection, "\r\n\r\nfoobar", false)
-    }.should raise_error(EM::WebSocket::HandshakeError, "Empty HTTP header")
+    handshake = EM::WebSocket::Handshake.new(false)
+    handshake.receive_data("\r\n\r\nfoobar")
+    
+    handshake.
+      should fail_with_error(EM::WebSocket::HandshakeError, 'Invalid HTTP header')
   end
-
-  it "should leave request with incomplete header" do
-    data = format_request(@request)
-    # Sends only half of the request
-    EM::WebSocket::HandlerFactory.build(mock(EM::WebSocket::Connection), data[0...(data.length / 2)]).should == nil
+  
+  it "should cope with requests where the header is split" do
+    request = format_request(@request)
+    incomplete_request = request[0...(request.length / 2)]
+    rest = request[(request.length / 2)..-1]
+    handshake = EM::WebSocket::Handshake.new(false)
+    handshake.receive_data(incomplete_request)
+    
+    handshake.instance_variable_get(:@deferred_status).should == nil
+    
+    # Send the remaining header
+    handshake.receive_data(rest)
+    
+    handshake(@request).should succeed_with_upgrade(@response)
   end
-
-  it "should leave request with incomplete third key" do
-    data = format_request(@request)
+  
+  it "should cope with requests where the third key is split" do
+    request = format_request(@request)
     # Removes last two bytes of the third key
-    EM::WebSocket::HandlerFactory.build(mock(EM::WebSocket::Connection), data[0...(data.length - 2)]).should == nil
+    incomplete_request = request[0..-3]
+    rest = request[-2..-1]
+    handshake = EM::WebSocket::Handshake.new(false)
+    handshake.receive_data(incomplete_request)
+    
+    handshake.instance_variable_get(:@deferred_status).should == nil
+    
+    # Send the remaining third key
+    handshake.receive_data(rest)
+    
+    handshake(@request).should succeed_with_upgrade(@response)
   end
 end

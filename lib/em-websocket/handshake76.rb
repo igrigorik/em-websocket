@@ -1,32 +1,29 @@
 require 'digest/md5'
 
-module EventMachine
-  module WebSocket
-    module Handshake76
-      def handshake
+module EventMachine::WebSocket
+  module Handshake76
+    class << self
+      def handshake(headers, path, secure)
         challenge_response = solve_challenge(
-          request['sec-websocket-key1'],
-          request['sec-websocket-key2'],
-          request['third-key']
+          headers['sec-websocket-key1'],
+          headers['sec-websocket-key2'],
+          headers['third-key']
         )
 
-        location  = "#{request['host'].scheme}://#{request['host'].host}"
-        location << ":#{request['host'].port}" if request['host'].port
-        location << request['path']
+        scheme = (secure ? "wss" : "ws")
+        location = "#{scheme}://#{headers['host']}#{path}"
 
         upgrade =  "HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
         upgrade << "Upgrade: WebSocket\r\n"
         upgrade << "Connection: Upgrade\r\n"
         upgrade << "Sec-WebSocket-Location: #{location}\r\n"
-        upgrade << "Sec-WebSocket-Origin: #{request['origin']}\r\n"
-        if protocol = request['sec-websocket-protocol']
+        upgrade << "Sec-WebSocket-Origin: #{headers['origin']}\r\n"
+        if protocol = headers['sec-websocket-protocol']
           validate_protocol!(protocol)
           upgrade << "Sec-WebSocket-Protocol: #{protocol}\r\n"
         end
         upgrade << "\r\n"
         upgrade << challenge_response
-
-        debug [:upgrade_headers, upgrade]
 
         return upgrade
       end

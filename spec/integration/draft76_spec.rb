@@ -35,6 +35,8 @@ describe "WebSocket server draft76" do
   end
   
   it_behaves_like "a websocket server" do
+    let(:version) { 76 }
+
     def start_server
       EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
         yield ws

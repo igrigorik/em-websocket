@@ -18,8 +18,8 @@ module EventMachine
       def trigger_on_message(msg)
         @onmessage.call(msg) if @onmessage
       end
-      def trigger_on_open
-        @onopen.call if @onopen
+      def trigger_on_open(handshake)
+        @onopen.call(handshake) if @onopen
       end
       def trigger_on_close
         @onclose.call if @onclose
@@ -41,7 +41,6 @@ module EventMachine
         @debug = options[:debug] || false
         @secure = options[:secure] || false
         @tls_options = options[:tls_options] || {}
-        @data = ''
 
         debug [:initialize]
       end
@@ -72,11 +71,6 @@ module EventMachine
         else
           dispatch(data)
         end
-      rescue HandshakeError => e
-        debug [:error, e]
-        trigger_on_error(e)
-        # Errors during the handshake require the connection to be aborted
-        abort
       rescue WSProtocolError => e
         debug [:error, e]
         trigger_on_error(e)
@@ -103,18 +97,30 @@ module EventMachine
       def dispatch(data)
         if data.match(/\A<policy-file-request\s*\/>/)
           send_flash_cross_domain_file
-          return false
         else
-          debug [:inbound_headers, data]
-          @data << data
-          @handler = HandlerFactory.build(self, @data, @secure, @debug)
-          unless @handler
-            # The whole header has not been received yet.
-            return false
+          @handshake ||= begin
+            handshake = Handshake.new(@secure)
+
+            handshake.callback { |upgrade_response, handler_klass|
+              debug [:accepting_ws_version, handshake.protocol_version]
+              debug [:upgrade_response, upgrade_response]
+              self.send_data(upgrade_response)
+              @handler = handler_klass.new(self, @debug)
+              @handshake = nil
+              trigger_on_open(handshake)
+            }
+
+            handshake.errback { |e|
+              debug [:error, e]
+              trigger_on_error(e)
+              # Handshake errors require the connection to be aborted
+              abort
+            }
+
+            handshake
           end
-          @data = nil
-          @handler.run
-          return true
+
+          @handshake.receive_data(data)
         end
       end
 
@@ -200,10 +206,6 @@ module EventMachine
         else
           raise WebSocketError, "Cannot test whether pingable before onopen callback"
         end
-      end
-
-      def request
-        @handler ? @handler.request : {}
       end
 
       def state
