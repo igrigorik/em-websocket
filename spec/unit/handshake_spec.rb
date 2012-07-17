@@ -140,6 +140,25 @@ describe EM::WebSocket::Handshake do
     handshake.
       should fail_with_error(EM::WebSocket::HandshakeError, 'Invalid HTTP header')
   end
+
+  # This might seems crazy, but very occasionally we saw multiple "Upgrade:
+  # WebSocket" headers in the wild. RFC 4.2.1 isn't particularly clear on this
+  # point, so for now I have decided not to accept --@mloughran
+  it "should raise error on multiple upgrade headers" do
+    handshake = EM::WebSocket::Handshake.new(false)
+
+    # Add a duplicate upgrade header
+    headers = format_request(@request)
+    upgrade_header = "Upgrade: WebSocket\r\n"
+    headers.gsub!(upgrade_header, "#{upgrade_header}#{upgrade_header}")
+
+    handshake.receive_data(headers)
+
+    handshake.errback { |e|
+      e.class.should == EM::WebSocket::HandshakeError
+      e.message.should == 'Invalid upgrade header: ["WebSocket", "WebSocket"]'
+    }
+  end
   
   it "should cope with requests where the header is split" do
     request = format_request(@request)

@@ -110,7 +110,7 @@ describe "WebSocket server draft75" do
         ws.onclose { EventMachine.stop }
         ws.onerror {|e|
           e.should be_an_instance_of EventMachine::WebSocket::HandshakeError
-          e.message.should match('Connection and Upgrade headers required')
+          e.message.should match('Not an upgrade request')
           EventMachine.stop
         }
       end

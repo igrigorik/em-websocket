@@ -74,8 +74,12 @@ module EventMachine
         end
 
         # Validate Upgrade
-        unless @parser.upgrade? && @headers['upgrade'].downcase == 'websocket'
-          raise HandshakeError, "Connection and Upgrade headers required"
+        unless @parser.upgrade?
+          raise HandshakeError, "Not an upgrade request"
+        end
+        upgrade = @headers['upgrade']
+        unless upgrade.kind_of?(String) && upgrade.downcase == 'websocket'
+          raise HandshakeError, "Invalid upgrade header: #{upgrade}"
         end
 
         # Determine version heuristically
