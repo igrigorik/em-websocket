@@ -28,7 +28,7 @@ module EventMachine
           process(@headers, @parser.upgrade_data)
         end
       rescue HTTP::Parser::Error => e
-        fail(HandshakeError.new("Invalid HTTP header"))
+        fail(HandshakeError.new("Invalid HTTP header: #{e.message}"))
       end
 
       # Returns the WebSocket upgrade headers as a hash.

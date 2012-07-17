@@ -187,7 +187,7 @@ describe "WebSocket server draft76" do
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |server|
         server.onerror { |error|
           error.should be_an_instance_of EM::WebSocket::HandshakeError
-          error.message.should == "Invalid HTTP header"
+          error.message.should == "Invalid HTTP header: Could not parse data entirely"
           done
         }
       }
