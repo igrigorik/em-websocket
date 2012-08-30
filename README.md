@@ -72,7 +72,7 @@ Errors caused by invalid WebSocket data (for example invalid errors in the WebSo
 
 ```ruby
 ws.onerror { |error|
-  if e.kind_of?(EM::WebSocket::WebSocketError)
+  if error.kind_of?(EM::WebSocket::WebSocketError)
     ...
   end
 }
