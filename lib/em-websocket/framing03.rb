@@ -104,7 +104,7 @@ module EventMachine
         frame = ''
 
         opcode = type_to_opcode(frame_type)
-        byte1 = opcode # since more, rsv1-3 are 0
+        byte1 = opcode + (fin ? 128 : 0) # since more, rsv1-3 are 0
         frame << byte1
 
         length = application_data.size
