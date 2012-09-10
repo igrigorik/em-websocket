@@ -236,12 +236,12 @@ describe EM::WebSocket::Framing07 do
   describe "examples from the spec" do
     it "a single-frame unmakedtext message" do
       @f.should_receive(:message).with(:text, '', 'Hello')
-      @f << "\x81\x05\x48\x65\x6c\x6c\x6f" # "\x84\x05Hello"
+      @f << "\x81\x05\x48\x65\x6c\x6c\x6f" # "\x81\x05Hello"
     end
 
     it "a single-frame masked text message" do
       @f.should_receive(:message).with(:text, '', 'Hello')
-      @f << "\x81\x85\x37\xfa\x21\x3d\x7f\x9f\x4d\x51\x58" # "\x84\x05Hello"
+      @f << "\x81\x85\x37\xfa\x21\x3d\x7f\x9f\x4d\x51\x58" # "\x81\x05Hello"
     end
 
     it "a fragmented unmasked text message" do
