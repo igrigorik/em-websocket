@@ -166,6 +166,16 @@ module EventMachine
         return nil
       end
 
+      # Send a WebSocket binary frame.
+      #
+      def send_binary(data)
+        if @handler
+          @handler.send_frame(:binary, data)
+        else
+          raise WebSocketError, "Cannot send binary before onopen callback"
+        end
+      end
+
       # Send a ping to the client. The client must respond with a pong.
       #
       # In the case that the client is running a WebSocket draft < 01, false
