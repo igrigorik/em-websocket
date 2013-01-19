@@ -28,7 +28,11 @@ module EventMachine
         end
 
         # extract query string values
-        request['query'] = Addressable::URI.parse(request['path']).query_values ||= {}
+        Addressable::URI.parse(request['path']).tap do |uri|
+          request['query'] = uri.query_values || {}
+          request['path'] = uri.path || '/'
+        end
+
         # extract remaining headers
         lines.each do |line|
           h = HEADER.match(line)

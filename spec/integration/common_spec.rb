@@ -61,9 +61,10 @@ describe "WebSocket server" do
 
       EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
         ws.onopen {
-          path, query = ws.request["path"].split('?')
+          path = ws.request['path']
+          query = ws.request['query']
           path.should == '/'
-          Hash[*query.split(/&|=/)].should == {"foo"=>"bar", "baz"=>"qux"}
+          query.should == {"foo"=>"bar", "baz"=>"qux"}
           ws.request["query"]["foo"].should == "bar"
           ws.request["query"]["baz"].should == "qux"
         }
