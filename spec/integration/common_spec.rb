@@ -1,7 +1,7 @@
 require 'helper'
 
 # These tests are not specific to any particular draft of the specification
-# 
+#
 describe "WebSocket server" do
   include EM::SpecHelper
   default_timeout 1
@@ -17,7 +17,7 @@ describe "WebSocket server" do
       EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) {}
     }
   end
-  
+
   it "should expose the WebSocket request headers, path and query params" do
     em {
       EM.add_timer(0.1) do
@@ -48,7 +48,7 @@ describe "WebSocket server" do
       end
     }
   end
-  
+
   it "should expose the WebSocket path and query params when nonempty" do
     em {
       EM.add_timer(0.1) do
@@ -78,7 +78,7 @@ describe "WebSocket server" do
       end
     }
   end
-  
+
   it "should raise an exception if frame sent before handshake complete" do
     em {
       # 1. Start WebSocket server
@@ -93,5 +93,29 @@ describe "WebSocket server" do
       # 2. Connect a dumb TCP connection (will not send handshake)
       EM.connect('0.0.0.0', 12345, EM::Connection)
     }
+  end
+
+  it "should allow the server to be started inside an existing EM" do
+    EM.run do
+      EventMachine.add_timer(0.1) do
+        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
+        http.errback { fail }
+        http.callback {
+          http.response_header.status.should == 101
+          http.close_connection
+        }
+        http.stream { |msg| }
+      end
+
+      EventMachine::WebSocket.run(:host => "0.0.0.0", :port => 12345) do |ws|
+        ws.onopen {
+          ws.request["user-agent"].should == "EventMachine HttpClient"
+        }
+        ws.onclose {
+          ws.state.should == :closed
+          EventMachine.stop
+        }
+      end
+    end
   end
 end

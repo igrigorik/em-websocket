@@ -27,10 +27,15 @@ module EventMachine
         trap("TERM") { stop }
         trap("INT")  { stop }
 
-        EventMachine::start_server(options[:host], options[:port],
-          EventMachine::WebSocket::Connection, options) do |c|
-          blk.call(c)
-        end
+        run(options, &blk)
+
+      end
+    end
+
+    def self.run(options, &blk)
+      EventMachine::start_server(options[:host], options[:port],
+                                 EventMachine::WebSocket::Connection, options) do |c|
+        blk.call(c)
       end
     end
 

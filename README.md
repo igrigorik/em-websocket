@@ -35,12 +35,30 @@ For example,
 ```ruby
 EventMachine::WebSocket.start({
     :host => "0.0.0.0",
-    :port => 443
+    :port => 443,
     :secure => true,
     :tls_options => {
       :private_key_file => "/private/key",
       :cert_chain_file => "/ssl/certificate"
     }
+}) do |ws|
+...
+end
+```
+
+## Running behind an SSL Proxy/Terminator, like Stunnel
+
+The :secure_proxy => true option makes it possible to run correctly when behind a secure SSL proxy/terminator like [Stunnel](http://www.stunnel.org/). When setting :secure_proxy => true, any reponse from the em-websocket which contains the websocket url will use the wss:// url scheme. None of the traffic is encrypted.
+
+This option is necessary when using websockets with an SSL proxy/terminator on Safari 5.1.x or earlier, and also on Safari in iOS 5.x and earlier. Most versions of Chrome, Safari 5.2, and Safari in iOS 6 do not appear to have this problem.
+
+For example,
+
+```ruby
+EventMachine::WebSocket.start({
+    :host => "0.0.0.0",
+    :port => 8080,
+    :secure_proxy => true
 }) do |ws|
 ...
 end
@@ -54,7 +72,7 @@ Errors caused by invalid WebSocket data (for example invalid errors in the WebSo
 
 ```ruby
 ws.onerror { |error|
-  if e.kind_of?(EM::WebSocket::WebSocketError)
+  if error.kind_of?(EM::WebSocket::WebSocketError)
     ...
   end
 }

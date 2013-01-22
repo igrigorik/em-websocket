@@ -38,6 +38,7 @@ module EventMachine
         @options = options
         @debug = options[:debug] || false
         @secure = options[:secure] || false
+        @secure_proxy = options[:secure_proxy] || false
         @tls_options = options[:tls_options] || {}
 
         debug [:initialize]
@@ -97,7 +98,7 @@ module EventMachine
           send_flash_cross_domain_file
         else
           @handshake ||= begin
-            handshake = Handshake.new(@secure)
+            handshake = Handshake.new(@secure || @secure_proxy)
 
             handshake.callback { |upgrade_response, handler_klass|
               debug [:accepting_ws_version, handshake.protocol_version]
@@ -170,6 +171,16 @@ module EventMachine
       end
 
       alias :send :send_text
+
+      # Send a WebSocket binary frame.
+      #
+      def send_binary(data)
+        if @handler
+          @handler.send_frame(:binary, data)
+        else
+          raise WebSocketError, "Cannot send binary before onopen callback"
+        end
+      end
 
       # Send a ping to the client. The client must respond with a pong.
       #
