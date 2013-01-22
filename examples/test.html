@@ -13,7 +13,7 @@
         }
 
         var Socket = "MozWebSocket" in window ? MozWebSocket : WebSocket;
-        var ws = new Socket("ws://localhost:8080/");
+        var ws = new Socket("ws://localhost:8080/foo/bar?hello=world");
         ws.onmessage = function(evt) { debug("Message: " + evt.data); };
         ws.onclose = function() { debug("socket closed"); };
         ws.onopen = function() {
