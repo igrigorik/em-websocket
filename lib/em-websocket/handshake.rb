@@ -57,7 +57,7 @@ module EventMachine
       end
 
       def query
-        Hash[*query_string.split(/&|=/)]
+        Hash[query_string.split('&').map { |c| c.split('=', 2) }]
       end
 
       # Returns the WebSocket origin header if provided
