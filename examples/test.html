@@ -1,8 +1,5 @@
 <html>
   <head>
-    <script src='js/swfobject.js'></script>
-    <script src='js/FABridge.js'></script>
-    <script src='js/web_socket.js'></script>
     <script>
       function init() {
         function debug(string) {
@@ -13,8 +10,8 @@
         }
 
         var Socket = "MozWebSocket" in window ? MozWebSocket : WebSocket;
-        var ws = new Socket("ws://localhost:8080/");
-        ws.onmessage = function(evt) { debug("Message: " + evt.data); };
+        var ws = new Socket("ws://localhost:8080/foo/bar?hello=world");
+        ws.onmessage = function(evt) { debug("Received: " + evt.data); };
         ws.onclose = function() { debug("socket closed"); };
         ws.onopen = function() {
           debug("connected...");

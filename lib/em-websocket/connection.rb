@@ -1,5 +1,3 @@
-require 'addressable/uri'
-
 module EventMachine
   module WebSocket
     class Connection < EventMachine::Connection
@@ -18,8 +16,8 @@ module EventMachine
       def trigger_on_message(msg)
         @onmessage.call(msg) if @onmessage
       end
-      def trigger_on_open
-        @onopen.call if @onopen
+      def trigger_on_open(handshake)
+        @onopen.call(handshake) if @onopen
       end
       def trigger_on_close
         @onclose.call if @onclose
@@ -42,7 +40,6 @@ module EventMachine
         @secure = options[:secure] || false
         @secure_proxy = options[:secure_proxy] || false
         @tls_options = options[:tls_options] || {}
-        @data = ''
 
         debug [:initialize]
       end
@@ -73,11 +70,6 @@ module EventMachine
         else
           dispatch(data)
         end
-      rescue HandshakeError => e
-        debug [:error, e]
-        trigger_on_error(e)
-        # Errors during the handshake require the connection to be aborted
-        abort
       rescue WSProtocolError => e
         debug [:error, e]
         trigger_on_error(e)
@@ -104,18 +96,30 @@ module EventMachine
       def dispatch(data)
         if data.match(/\A<policy-file-request\s*\/>/)
           send_flash_cross_domain_file
-          return false
         else
-          debug [:inbound_headers, data]
-          @data << data
-          @handler = HandlerFactory.build(self, @data, @secure || @secure_proxy, @debug)
-          unless @handler
-            # The whole header has not been received yet.
-            return false
+          @handshake ||= begin
+            handshake = Handshake.new(@secure || @secure_proxy)
+
+            handshake.callback { |upgrade_response, handler_klass|
+              debug [:accepting_ws_version, handshake.protocol_version]
+              debug [:upgrade_response, upgrade_response]
+              self.send_data(upgrade_response)
+              @handler = handler_klass.new(self, @debug)
+              @handshake = nil
+              trigger_on_open(handshake)
+            }
+
+            handshake.errback { |e|
+              debug [:error, e]
+              trigger_on_error(e)
+              # Handshake errors require the connection to be aborted
+              abort
+            }
+
+            handshake
           end
-          @data = nil
-          @handler.run
-          return true
+
+          @handshake.receive_data(data)
         end
       end
 
@@ -140,7 +144,7 @@ module EventMachine
       # A WebSocketError may be raised if the connection is in an opening or a
       # closing state, or if the passed in data is not valid UTF-8
       #
-      def send(data)
+      def send_text(data)
         # If we're using Ruby 1.9, be pedantic about encodings
         if ENCODING_SUPPORTED
           # Also accept ascii only data in other encodings for convenience
@@ -165,6 +169,8 @@ module EventMachine
         data.force_encoding(UTF8) if ENCODING_SUPPORTED
         return nil
       end
+
+      alias :send :send_text
 
       # Send a WebSocket binary frame.
       #
@@ -211,10 +217,6 @@ module EventMachine
         else
           raise WebSocketError, "Cannot test whether pingable before onopen callback"
         end
-      end
-
-      def request
-        @handler ? @handler.request : {}
       end
 
       def state

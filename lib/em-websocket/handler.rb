@@ -1,26 +1,44 @@
 module EventMachine
   module WebSocket
     class Handler
+      def self.klass_factory(version)
+        handler_klass = case version
+        when 75
+          Handler75
+        when 76
+          Handler76
+        when 1..3
+          # We'll use handler03 - I believe they're all compatible
+          Handler03
+        when 5
+          Handler05
+        when 6
+          Handler06
+        when 7
+          Handler07
+        when 8
+          # drafts 9, 10, 11 and 12 should never change the version
+          # number as they are all the same as version 08.
+          Handler08
+        when 13
+          # drafts 13 to 17 all identify as version 13 as they are
+          # only minor changes or text changes.
+          Handler13
+        else
+          # According to spec should abort the connection
+          raise HandshakeError, "Protocol version #{version} not supported"
+        end
+      end
+
       include Debugger
 
       attr_reader :request, :state
 
-      def initialize(connection, request, debug = false)
-        @connection, @request = connection, request
+      def initialize(connection, debug = false)
+        @connection = connection
         @debug = debug
-        @state = :handshake
-        initialize_framing
-      end
-
-      def run
-        @connection.send_data handshake
         @state = :connected
-        @connection.trigger_on_open
-      end
-
-      # Handshake response
-      def handshake
-        # Implemented in subclass
+        initialize_framing
       end
 
       def receive_data(data)

@@ -7,84 +7,93 @@ EventMachine based, async, Ruby WebSocket server. Take a look at examples direct
 ## Simple server example
 
 ```ruby
-EventMachine.run {
+require 'em-websocket'
 
-    EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
-        ws.onopen {
-          puts "WebSocket connection open"
+EM.run {
+  EM::WebSocket.run(:host => "0.0.0.0", :port => 8080) do |ws|
+    ws.onopen { |handshake|
+      puts "WebSocket connection open"
 
-          # publish message to the client
-          ws.send "Hello Client"
-        }
+      # Access properties on the EM::WebSocket::Handshake object, e.g.
+      # path, query_string, origin, headers
 
-        ws.onclose { puts "Connection closed" }
-        ws.onmessage { |msg|
-          puts "Recieved message: #{msg}"
-          ws.send "Pong: #{msg}"
-        }
-    end
+      # Publish message to the client
+      ws.send "Hello Client, you connected to #{handshake.path}"
+    }
+
+    ws.onclose { puts "Connection closed" }
+
+    ws.onmessage { |msg|
+      puts "Recieved message: #{msg}"
+      ws.send "Pong: #{msg}"
+    }
+  end
 }
 ```
 
 ## Secure server
 
-It is possible to accept secure wss:// connections by passing :secure => true when opening the connection. Safari 5 does not currently support prompting on untrusted SSL certificates therefore using signed certificates is highly recommended. Pass a :tls_options hash containing keys as described in http://eventmachine.rubyforge.org/EventMachine/Connection.html#M000296
+It is possible to accept secure `wss://` connections by passing `:secure => true` when opening the connection. Pass a `:tls_options` hash containing keys as described in http://eventmachine.rubyforge.org/EventMachine/Connection.html#start_tls-instance_method
 
-For example,
+**Warning**: Safari 5 does not currently support prompting on untrusted SSL certificates therefore using a self signed certificate may leave you scratching your head.
 
 ```ruby
-EventMachine::WebSocket.start({
-    :host => "0.0.0.0",
-    :port => 443,
-    :secure => true,
-    :tls_options => {
-      :private_key_file => "/private/key",
-      :cert_chain_file => "/ssl/certificate"
-    }
+EM::WebSocket.start({
+  :host => "0.0.0.0",
+  :port => 443,
+  :secure => true,
+  :tls_options => {
+    :private_key_file => "/private/key",
+    :cert_chain_file => "/ssl/certificate"
+  }
 }) do |ws|
-...
+  # ...
 end
 ```
 
 ## Running behind an SSL Proxy/Terminator, like Stunnel
 
-The :secure_proxy => true option makes it possible to run correctly when behind a secure SSL proxy/terminator like [Stunnel](http://www.stunnel.org/). When setting :secure_proxy => true, any reponse from the em-websocket which contains the websocket url will use the wss:// url scheme. None of the traffic is encrypted.
+The `:secure_proxy => true` option makes it possible to use em-websocket behind a secure SSL proxy/terminator like [Stunnel](http://www.stunnel.org/) which does the actual encryption & decryption.
 
-This option is necessary when using websockets with an SSL proxy/terminator on Safari 5.1.x or earlier, and also on Safari in iOS 5.x and earlier. Most versions of Chrome, Safari 5.2, and Safari in iOS 6 do not appear to have this problem.
-
-For example,
+Note that this option is only required to support drafts 75 & 76 correctly (e.g. Safari 5.1.x & earlier, and Safari on iOS 5.x & earlier).
 
 ```ruby
-EventMachine::WebSocket.start({
-    :host => "0.0.0.0",
-    :port => 8080,
-    :secure_proxy => true
+EM::WebSocket.start({
+  :host => "0.0.0.0",
+  :port => 8080,
+  :secure_proxy => true
 }) do |ws|
-...
+  # ...
 end
 ```
 
 ## Handling errors
 
-There are two kinds of errors that need to be handled - errors caused by incompatible WebSocket clients sending invalid data and errors in application code. They are handled as follows:
+There are two kinds of errors that need to be handled -- WebSocket protocol errors and errors in application code.
 
-Errors caused by invalid WebSocket data (for example invalid errors in the WebSocket handshake or invalid message frames) raise errors which descend from `EventMachine::WebSocket::WebSocketError`. Such errors are rescued internally and the WebSocket connection will be closed immediately or an error code sent to the browser in accordance to the WebSocket specification. However it is possible to be notified in application code on such errors by including an `onerror` callback.
+WebSocket protocol errors (for example invalid data in the handshake or invalid message frames) raise errors which descend from `EM::WebSocket::WebSocketError`. Such errors are rescued internally and the WebSocket connection will be closed immediately or an error code sent to the browser in accordance to the WebSocket specification. It is possible to be notified in application code of such errors by including an `onerror` callback.
 
 ```ruby
 ws.onerror { |error|
   if error.kind_of?(EM::WebSocket::WebSocketError)
-    ...
+    # ...
   end
 }
 ```
 
-Application errors are treated differently. If no `onerror` callback has been defined these errors will propagate to the EventMachine reactor, typically causing your program to terminate. If you wish to handle exceptions, simply supply an `onerror callback` and check for exceptions which are not decendant from `EventMachine::WebSocket::WebSocketError`.
+Application errors are treated differently. If no `onerror` callback has been defined these errors will propagate to the EventMachine reactor, typically causing your program to terminate. If you wish to handle exceptions, simply supply an `onerror callback` and check for exceptions which are not descendant from `EM::WebSocket::WebSocketError`.
 
-It is also possible to log all errors when developing by including the `:debug => true` option when initialising the WebSocket connection.
+It is also possible to log all errors when developing by including the `:debug => true` option when initialising the WebSocket server.
+
+## Emulating WebSockets in older browsers
+
+It is possible to emulate WebSockets in older browsers using flash emulation. For example take a look at the [web-socket-js](https://github.com/gimite/web-socket-js) project.
+
+Using flash emulation does require some minimal support from em-websocket which is enabled by default. If flash connects to the WebSocket port and requests a policy file (which it will do if it fails to receive a policy file on port 843 after a timeout), em-websocket will return one. Also see <https://github.com/igrigorik/em-websocket/issues/61> for an example policy file server which you can run on port 843.
 
 ## Examples & Projects using em-websocket
 
-* [Pusher](http://pusherapp.com) - Realtime client push
+* [Pusher](http://pusher.com) - Realtime Messaging Service
 * [Livereload](https://github.com/mockko/livereload) - LiveReload applies CSS/JS changes to Safari or Chrome w/o reloading
 * [Twitter AMQP WebSocket Example](http://github.com/rubenfonseca/twitter-amqp-websocket-example)
 * examples/multicast.rb - broadcast all ruby tweets to all subscribers

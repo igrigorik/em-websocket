@@ -10,6 +10,8 @@ describe "WebSocket server draft75" do
   default_timeout 1
 
   it_behaves_like "a websocket server" do
+    let(:version) { 75 }
+
     def start_server
       EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
         yield ws
@@ -108,7 +110,7 @@ describe "WebSocket server draft75" do
         ws.onclose { EventMachine.stop }
         ws.onerror {|e|
           e.should be_an_instance_of EventMachine::WebSocket::HandshakeError
-          e.message.should match('Connection and Upgrade headers required')
+          e.message.should match('Not an upgrade request')
           EventMachine.stop
         }
       end
