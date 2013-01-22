@@ -96,9 +96,9 @@ describe "WebSocket server" do
   end
 
   it "should allow the server to be started inside an existing EM" do
-    EM.run do
-      EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
+    em {
+      EM.add_timer(0.1) do
+        http = EM::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
         http.errback { fail }
         http.callback {
           http.response_header.status.should == 101
@@ -107,15 +107,15 @@ describe "WebSocket server" do
         http.stream { |msg| }
       end
 
-      EventMachine::WebSocket.run(:host => "0.0.0.0", :port => 12345) do |ws|
-        ws.onopen {
-          ws.request["user-agent"].should == "EventMachine HttpClient"
+      EM::WebSocket.run(:host => "0.0.0.0", :port => 12345) do |ws|
+        ws.onopen { |handshake|
+          handshake.headers["User-Agent"].should == "EventMachine HttpClient"
         }
         ws.onclose {
           ws.state.should == :closed
-          EventMachine.stop
+          done
         }
       end
-    end
+    }
   end
 end
