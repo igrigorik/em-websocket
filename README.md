@@ -85,6 +85,12 @@ Application errors are treated differently. If no `onerror` callback has been de
 
 It is also possible to log all errors when developing by including the `:debug => true` option when initialising the WebSocket server.
 
+## Emulating WebSockets in older browsers
+
+It is possible to emulate WebSockets in older browsers using flash emulation. For example take a look at the [web-socket-js](https://github.com/gimite/web-socket-js) project.
+
+Using flash emulation does require some minimal support from em-websocket which is enabled by default. If flash connects to the WebSocket port and requests a policy file (which it will do if it fails to receive a policy file on port 843 after a timeout), em-websocket will return one. Also see <https://github.com/igrigorik/em-websocket/issues/61> for an example policy file server which you can run on port 843.
+
 ## Examples & Projects using em-websocket
 
 * [Pusher](http://pusher.com) - Realtime Messaging Service
