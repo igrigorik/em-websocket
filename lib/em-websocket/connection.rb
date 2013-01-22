@@ -1,5 +1,3 @@
-require 'addressable/uri'
-
 module EventMachine
   module WebSocket
     class Connection < EventMachine::Connection
