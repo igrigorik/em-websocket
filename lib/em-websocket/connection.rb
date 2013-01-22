@@ -145,7 +145,7 @@ module EventMachine
       # A WebSocketError may be raised if the connection is in an opening or a
       # closing state, or if the passed in data is not valid UTF-8
       #
-      def send(data)
+      def send_text(data)
         # If we're using Ruby 1.9, be pedantic about encodings
         if ENCODING_SUPPORTED
           # Also accept ascii only data in other encodings for convenience
@@ -170,6 +170,8 @@ module EventMachine
         data.force_encoding(UTF8) if ENCODING_SUPPORTED
         return nil
       end
+
+      alias :send :send_text
 
       # Send a ping to the client. The client must respond with a pong.
       #
