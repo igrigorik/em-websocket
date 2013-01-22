@@ -1,5 +1,18 @@
 = Changelog
 
+== 0.4.0 / ?
+
+- new features:
+  - on_open handler is now passed a handshake object which exposes the request headers, path, and query parameters
+  - Easily access the protocol version via Handshake#protocol_version
+  - Easily access the origin via Handshake#origin
+
+- changed:
+  - Removed Connection#request - change to using handshake passed to on_open
+
+- internals:
+  - Uses the http_parser.rb gem
+
 == 0.3.8 / 2012-07-12
 
 - bug fixes:
