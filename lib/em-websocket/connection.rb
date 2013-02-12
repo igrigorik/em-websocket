@@ -75,13 +75,13 @@ module EventMachine
       rescue WSProtocolError => e
         debug [:error, e]
         trigger_on_error(e)
-        close_websocket_private(e.code)
+        close_websocket_private(e.code, e.message)
       rescue => e
         debug [:error, e]
 
         # There is no code defined for application errors, so use 3000
         # (which is reserved for frameworks)
-        close_websocket_private(3000)
+        close_websocket_private(3000, "Application error")
 
         # These are application errors - raise unless onerror defined
         trigger_on_error(e) || raise(e)
@@ -247,7 +247,7 @@ module EventMachine
         close_connection
       end
 
-      def close_websocket_private(code, body = nil)
+      def close_websocket_private(code, body)
         if @handler
           debug [:closing, code]
           @handler.close_websocket(code, body)
