@@ -191,7 +191,7 @@ describe "draft03" do
           ws.onopen {
             # 2. Send a close frame
             EM.next_tick {
-              ws.close_websocket
+              ws.close
             }
           }
         }
@@ -221,7 +221,7 @@ describe "draft03" do
           ws.onopen {
             # 2. Send a close frame
             EM.next_tick {
-              ws.close_websocket
+              ws.close
             }
 
             # 3. Check that exception raised if I attempt to send more data
@@ -246,7 +246,7 @@ describe "draft03" do
           ws.onopen {
             # 2. Send a close frame
             EM.next_tick {
-              ws.close_websocket
+              ws.close
             }
           }
         }

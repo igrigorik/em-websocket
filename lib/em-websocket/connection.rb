@@ -49,13 +49,16 @@ module EventMachine
       # Use this method to close the websocket connection cleanly
       # This sends a close frame and waits for acknowlegement before closing
       # the connection
-      def close_websocket(code = nil, body = nil)
+      def close(code = nil, body = nil)
         if code && !ACCEPTABLE_CLOSE_CODES.include?(code)
           raise "Application code may only use codes from 1000, 3000-4999"
         end
 
         close_websocket_private(code, body)
       end
+
+      # Deprecated, to be removed in version 0.6
+      alias :close_websocket :close
 
       def post_init
         start_tls(@tls_options) if @secure
