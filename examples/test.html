@@ -12,7 +12,9 @@
         var Socket = "MozWebSocket" in window ? MozWebSocket : WebSocket;
         var ws = new Socket("ws://localhost:8080/foo/bar?hello=world");
         ws.onmessage = function(evt) { debug("Received: " + evt.data); };
-        ws.onclose = function() { debug("socket closed"); };
+        ws.onclose = function(event) {
+          debug("Closed - code: " + event.code + ", reason: " + event.reason + ", wasClean: " + event.wasClean);
+        };
         ws.onopen = function() {
           debug("connected...");
           ws.send("hello server");
