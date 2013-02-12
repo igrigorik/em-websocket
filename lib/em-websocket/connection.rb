@@ -54,9 +54,6 @@ module EventMachine
           raise "Application code may only use codes from 1000, 3000-4999"
         end
 
-        # If code not defined then set to 1000 (normal closure)
-        code ||= 1000
-
         close_websocket_private(code, body)
       end
 
