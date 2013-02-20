@@ -5,8 +5,6 @@ module EventMachine
 
       attr_writer :max_frame_size
 
-      ACCEPTABLE_CLOSE_CODES = [1000] + (3000..4999).to_a
-
       # define WebSocket callbacks
       def onopen(&blk);     @onopen = blk;    end
       def onclose(&blk);    @onclose = blk;   end
@@ -50,7 +48,7 @@ module EventMachine
       # This sends a close frame and waits for acknowlegement before closing
       # the connection
       def close(code = nil, body = nil)
-        if code && !ACCEPTABLE_CLOSE_CODES.include?(code)
+        if code && !acceptable_close_code?(code)
           raise "Application code may only use codes from 1000, 3000-4999"
         end
 
@@ -254,6 +252,19 @@ module EventMachine
         else
           # The handshake hasn't completed - should be safe to terminate
           abort
+        end
+      end
+
+      # Accept 1000, 3xxx or 4xxx
+      #
+      # This is consistent with the spec and what browsers have implemented
+      # Frameworks should use 3xxx while applications should use 4xxx
+      def acceptable_close_code?(code)
+        case code
+        when 1000, (3000..4999)
+          true
+        else
+          false
         end
       end
     end
