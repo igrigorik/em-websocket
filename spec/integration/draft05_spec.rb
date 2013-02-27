@@ -23,7 +23,7 @@ describe "draft05" do
   
   def start_server
     EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
-      yield ws
+      yield ws if block_given?
     }
   end
 
@@ -31,6 +31,7 @@ describe "draft05" do
     client = EM.connect('0.0.0.0', 12345, Draft03FakeWebSocketClient)
     client.send_data(format_request(@request))
     yield client if block_given?
+    return client
   end
   
   it "should open connection" do

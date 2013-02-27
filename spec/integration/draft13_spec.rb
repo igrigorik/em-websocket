@@ -33,7 +33,7 @@ describe "draft13" do
 
   def start_server
     EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
-      yield ws
+      yield ws if block_given?
     }
   end
 
@@ -41,6 +41,7 @@ describe "draft13" do
     client = EM.connect('0.0.0.0', 12345, Draft07FakeWebSocketClient)
     client.send_data(format_request(@request))
     yield client if block_given?
+    return client
   end
 
   it_behaves_like "a websocket server" do
@@ -49,11 +50,9 @@ describe "draft13" do
 
   it "should send back the correct handshake response" do
     em {
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
+      start_server
 
-      # Create a fake client which sends draft 13 handshake
-      connection = EM.connect('0.0.0.0', 12345, Draft07FakeWebSocketClient)
-      connection.send_data(format_request(@request))
+      connection = start_client
 
       connection.onopen {
         connection.handshake_response.lines.sort.
@@ -66,7 +65,7 @@ describe "draft13" do
   # TODO: This test would be much nicer with a real websocket client...
   it "should support sending pings and binding to onpong" do
     em {
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+      start_server { |ws|
         ws.onopen {
           ws.should be_pingable
           EM.next_tick {
@@ -80,9 +79,7 @@ describe "draft13" do
         }
       }
 
-      # Create a fake client which sends draft 13 handshake
-      connection = EM.connect('0.0.0.0', 12345, Draft07FakeWebSocketClient)
-      connection.send_data(format_request(@request))
+      connection = start_client
 
       # Confusing, fake onmessage means any data after the handshake
       connection.onmessage { |data|

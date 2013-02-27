@@ -37,7 +37,7 @@ describe "draft03" do
 
   def start_server
     EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
-      yield ws
+      yield ws if block_given?
     }
   end
 
@@ -45,6 +45,7 @@ describe "draft03" do
     client = EM.connect('0.0.0.0', 12345, Draft03FakeWebSocketClient)
     client.send_data(format_request(@request))
     yield client if block_given?
+    return client
   end
 
   it_behaves_like "a websocket server" do
@@ -72,16 +73,14 @@ describe "draft03" do
     
     it "should accept a fragmented text message" do
       em {
-        EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+        start_server { |ws|
           ws.onmessage { |msg|
             msg.should == 'Hello'
             done
           }
         }
 
-        # Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        connection.send_data(format_request(@request))
+        connection = start_client
 
         # Send frame
         connection.onopen {
@@ -93,11 +92,9 @@ describe "draft03" do
     
     it "should accept a ping request and respond with the same body" do
       em {
-        EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws| }
+        start_server
 
-        # Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        connection.send_data(format_request(@request))
+        connection = start_client
 
         # Send frame
         connection.onopen {
@@ -116,16 +113,14 @@ describe "draft03" do
       em {
         data = "a" * 256
         
-        EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+        start_server { |ws|
           ws.onmessage { |msg|
             msg.should == data
             done
           }
         }
 
-        # Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        connection.send_data(format_request(@request))
+        connection = start_client
 
         # Send frame
         connection.onopen {
@@ -138,16 +133,14 @@ describe "draft03" do
       em {
         data = "a" * 65536
         
-        EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+        start_server { |ws|
           ws.onmessage { |msg|
             msg.should == data
             done
           }
         }
 
-        # Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        connection.send_data(format_request(@request))
+        connection = start_client
 
         # Send frame
         connection.onopen {
@@ -160,11 +153,9 @@ describe "draft03" do
   describe "close handling" do
     it "should respond to a new close frame with a close frame" do
       em {
-        EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws| }
+        start_server
 
-        # Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        connection.send_data(format_request(@request))
+        connection = start_client
 
         # Send close frame
         connection.onopen {
@@ -183,7 +174,7 @@ describe "draft03" do
       em {
         ack_received = false
 
-        EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+        start_server { |ws|
           ws.onopen {
             # 2. Send a close frame
             EM.next_tick {
@@ -193,8 +184,7 @@ describe "draft03" do
         }
 
         # 1. Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        connection.send_data(format_request(@request))
+        connection = start_client
 
         # 3. Check that close frame recieved and acknowlege it
         connection.onmessage { |frame|
@@ -213,7 +203,7 @@ describe "draft03" do
 
     it "should not allow data frame to be sent after close frame sent" do
       em {
-        EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+        start_server { |ws|
           ws.onopen {
             # 2. Send a close frame
             EM.next_tick {
@@ -231,14 +221,13 @@ describe "draft03" do
         }
 
         # 1. Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        connection.send_data(format_request(@request))
+        connection = start_client
       }
     end
 
     it "should still respond to control frames after close frame sent" do
       em {
-        EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+        start_server { |ws|
           ws.onopen {
             # 2. Send a close frame
             EM.next_tick {
@@ -248,8 +237,7 @@ describe "draft03" do
         }
 
         # 1. Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        connection.send_data(format_request(@request))
+        connection = start_client
 
         connection.onmessage { |frame|
           if frame == "\x01\x00"

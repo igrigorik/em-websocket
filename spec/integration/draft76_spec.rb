@@ -36,7 +36,7 @@ describe "WebSocket server draft76" do
   
   def start_server
     EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
-      yield ws
+      yield ws if block_given?
     }
   end
 
@@ -44,6 +44,7 @@ describe "WebSocket server draft76" do
     client = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
     client.send_data(format_request(@request))
     yield client if block_given?
+    return client
   end
 
   it_behaves_like "a websocket server" do
@@ -52,27 +53,23 @@ describe "WebSocket server draft76" do
 
   it "should send back the correct handshake response" do
     em {
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
+      start_server
 
-      # Create a fake client which sends draft 76 handshake
-      connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-      connection.send_data(format_request(@request))
-
-      connection.onopen {
-        connection.handshake_response.lines.sort.
-          should == format_response(@response).lines.sort
-        done
+      start_client { |connection|
+        connection.onopen {
+          connection.handshake_response.lines.sort.
+            should == format_response(@response).lines.sort
+          done
+        }
       }
     }
   end
   
   it "should send closing frame back and close the connection after recieving closing frame" do
     em {
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
+      start_server
 
-      # Create a fake client which sends draft 76 handshake
-      connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-      connection.send_data(format_request(@request))
+      connection = start_client
 
       # Send closing frame after handshake complete
       connection.onopen {
@@ -91,16 +88,14 @@ describe "WebSocket server draft76" do
   
   it "should ignore any data received after the closing frame" do
     em {
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+      start_server { |ws|
         # Fail if foobar message is received
         ws.onmessage { |msg|
           fail
         }
       }
 
-      # Create a fake client which sends draft 76 handshake
-      connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-      connection.send_data(format_request(@request))
+      connection = start_client
 
       # Send closing frame after handshake complete, followed by another msg
       connection.onopen {
@@ -116,15 +111,13 @@ describe "WebSocket server draft76" do
 
   it "should accept null bytes within the frame after a line return" do
     em {
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+      start_server { |ws|
         ws.onmessage { |msg|
           msg.should == "\n\000"
         }
       }
 
-      # Create a fake client which sends draft 76 handshake
-      connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-      connection.send_data(format_request(@request))
+      connection = start_client
 
       # Send closing frame after handshake complete
       connection.onopen {
@@ -140,7 +133,7 @@ describe "WebSocket server draft76" do
 
   it "should handle unreasonable frame lengths by calling onerror callback" do
     em {
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |server|
+      start_server { |server|
         server.onerror { |error|
           error.should be_an_instance_of EM::WebSocket::WSMessageTooBigError
           error.message.should == "Frame length too long (1180591620717411303296 bytes)"
@@ -148,9 +141,7 @@ describe "WebSocket server draft76" do
         }
       }
 
-      # Create a fake client which sends draft 76 handshake
-      client = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-      client.send_data(format_request(@request))
+      client = start_client
 
       # This particular frame indicates a message length of
       # 1180591620717411303296 bytes. Such a message would previously cause
@@ -164,7 +155,7 @@ describe "WebSocket server draft76" do
   
   it "should handle impossible frames by calling onerror callback" do
     em {
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |server|
+      start_server { |server|
         server.onerror { |error|
           error.should be_an_instance_of EM::WebSocket::WSProtocolError
           error.message.should == "Invalid frame received"
@@ -172,9 +163,7 @@ describe "WebSocket server draft76" do
         }
       }
 
-      # Create a fake client which sends draft 76 handshake
-      client = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-      client.send_data(format_request(@request))
+      client = start_client
 
       client.onopen {
         client.send_data("foobar") # Does not start with \x00 or \xff
@@ -184,7 +173,7 @@ describe "WebSocket server draft76" do
 
   it "should handle invalid http requests by raising HandshakeError passed to onerror callback" do
     em {
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |server|
+      start_server { |server|
         server.onerror { |error|
           error.should be_an_instance_of EM::WebSocket::HandshakeError
           error.message.should == "Invalid HTTP header: Could not parse data entirely"
@@ -199,7 +188,7 @@ describe "WebSocket server draft76" do
 
   it "should handle handshake request split into two TCP packets" do
     em {
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) { }
+      start_server
 
       # Create a fake client which sends draft 76 handshake
       connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)

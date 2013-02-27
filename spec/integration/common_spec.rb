@@ -6,6 +6,12 @@ describe "WebSocket server" do
   include EM::SpecHelper
   default_timeout 1
 
+  def start_server
+    EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+      yield ws if block_given?
+    }
+  end
+
   it "should fail on non WebSocket requests" do
     em {
       EM.add_timer(0.1) do
@@ -14,7 +20,7 @@ describe "WebSocket server" do
         http.callback { fail }
       end
 
-      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) {}
+      start_server
     }
   end
 
@@ -30,7 +36,7 @@ describe "WebSocket server" do
         http.stream { |msg| }
       end
 
-      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
+      start_server do |ws|
         ws.onopen { |handshake|
           headers = handshake.headers
           headers["User-Agent"].should == "EventMachine HttpClient"
@@ -64,7 +70,7 @@ describe "WebSocket server" do
         http.stream { |msg| }
       end
 
-      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
+      start_server do |ws|
         ws.onopen { |handshake|
           handshake.path.should == '/hello'
           handshake.query_string.split('&').sort.
@@ -82,7 +88,7 @@ describe "WebSocket server" do
   it "should raise an exception if frame sent before handshake complete" do
     em {
       # 1. Start WebSocket server
-      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+      start_server { |ws|
         # 3. Try to send a message to the socket
         lambda {
           ws.send('early message')
@@ -107,7 +113,7 @@ describe "WebSocket server" do
         http.stream { |msg| }
       end
 
-      EM::WebSocket.run(:host => "0.0.0.0", :port => 12345) do |ws|
+      start_server do |ws|
         ws.onopen { |handshake|
           handshake.headers["User-Agent"].should == "EventMachine HttpClient"
         }
