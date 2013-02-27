@@ -45,6 +45,20 @@ It's possible to send a ping frame (`ws.ping(body = '')`), which the client must
 
 When receiving a ping, the server will automatically respond with a pong as the spec requires (so you should _not_ write an onping handler that replies with a pong), however it is possible to bind to ping & pong events if desired by using the `onping` and `onpong` methods.
 
+### Close codes and reasons
+
+A WebSocket connection can be closed cleanly, regardless of protocol, by calling `ws.close(code = nil, body = nil)`.
+
+Acceptable close codes are defined in the WebSocket rfc (<http://tools.ietf.org/html/rfc6455#section-7.4>). In short code 1000 is a generic normal close, range 3xxx are designed for libraries, framesworks, and applications, and can be registered, while range 4xxx is a free for all. You should probably be using the 4xxx range :)
+
+Early protocols just close the TCP connection, draft 3 introduced a close handshake, and draft 6 added close codes and reasons to the close handshake. Call `ws.supports_close_codes?` to check whether close codes are supported (i.e. the protocol version is 6 or above).
+
+The `onclose` callback is passed a hash which may contain following keys (depending on the protocol version):
+
+* `was_clean`: boolean indicating whether the connection was closed via the close handshake.
+* `code`: the close code
+* `reason`: the close reason
+
 ## Secure server
 
 It is possible to accept secure `wss://` connections by passing `:secure => true` when opening the connection. Pass a `:tls_options` hash containing keys as described in http://eventmachine.rubyforge.org/EventMachine/Connection.html#start_tls-instance_method
