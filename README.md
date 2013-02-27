@@ -31,6 +31,20 @@ EM.run {
 }
 ```
 
+## Protocols supported, and protocol specific functionality
+
+Supports all WebSocket protocols in use in the wild (and a few that are not): drafts 75, 76, 1-17, rfc.
+
+While some of the changes between protocols are unimportant from the point of view of application developers, a few drafts did introduce new functionality. It's possible to easily test for this functionality by using
+
+### Ping & pong supported
+
+Call `ws.pingable?` to check whether ping & pong is supported by the protocol in use.
+
+It's possible to send a ping frame (`ws.ping(body = '')`), which the client must respond to with a pong, or the server can send an unsolicited pong frame (`ws.pong(body = '')`) which the client should not respond to. These methods can be used regardless of protocol version; they return true if the protocol supports ping&pong or false otherwise.
+
+When receiving a ping, the server will automatically respond with a pong as the spec requires (so you should _not_ write an onping handler that replies with a pong), however it is possible to bind to ping & pong events if desired by using the `onping` and `onpong` methods.
+
 ## Secure server
 
 It is possible to accept secure `wss://` connections by passing `:secure => true` when opening the connection. Pass a `:tls_options` hash containing keys as described in http://eventmachine.rubyforge.org/EventMachine/Connection.html#start_tls-instance_method
