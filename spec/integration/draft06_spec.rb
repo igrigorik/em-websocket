@@ -82,4 +82,16 @@ describe "draft06" do
       }
     }
   end
+
+  it "should report that close codes are supported" do
+    em {
+      start_server { |ws|
+        ws.onopen {
+          ws.supports_close_codes?.should == true
+          done
+        }
+      }
+      start_client
+    }
+  end
 end

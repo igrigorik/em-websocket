@@ -9,19 +9,19 @@ describe "WebSocket server draft75" do
   include EM::SpecHelper
   default_timeout 1
 
+  def start_server
+    EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+      yield ws
+    }
+  end
+
+  def start_client
+    client = Draft75WebSocketClient.new
+    yield client if block_given?
+  end
+
   it_behaves_like "a websocket server" do
     let(:version) { 75 }
-
-    def start_server
-      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
-        yield ws
-      }
-    end
-
-    def start_client
-      client = Draft75WebSocketClient.new
-      yield client if block_given?
-    end
   end
 
   it "should automatically complete WebSocket handshake" do
@@ -114,6 +114,18 @@ describe "WebSocket server draft75" do
           EventMachine.stop
         }
       end
+    }
+  end
+
+  it "should report that close codes are not supported" do
+    em {
+      start_server { |ws|
+        ws.onopen {
+          ws.supports_close_codes?.should == false
+          done
+        }
+      }
+      start_client
     }
   end
 end

@@ -221,6 +221,14 @@ module EventMachine
         end
       end
 
+      def supports_close_codes?
+        if @handler
+          @handler.supports_close_codes?
+        else
+          raise WebSocketError, "Cannot test before onopen callback"
+        end
+      end
+
       def state
         @handler ? @handler.state : :handshake
       end

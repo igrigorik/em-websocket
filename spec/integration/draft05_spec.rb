@@ -45,4 +45,16 @@ describe "draft05" do
       start_client
     }
   end
+
+  it "should report that close codes are not supported" do
+    em {
+      start_server { |ws|
+        ws.onopen {
+          ws.supports_close_codes?.should == false
+          done
+        }
+      }
+      start_client
+    }
+  end
 end

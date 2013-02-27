@@ -34,20 +34,20 @@ describe "WebSocket server draft76" do
     }
   end
   
+  def start_server
+    EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+      yield ws
+    }
+  end
+
+  def start_client
+    client = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
+    client.send_data(format_request(@request))
+    yield client if block_given?
+  end
+
   it_behaves_like "a websocket server" do
     let(:version) { 76 }
-
-    def start_server
-      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
-        yield ws
-      }
-    end
-
-    def start_client
-      client = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-      client.send_data(format_request(@request))
-      yield client if block_given?
-    end
   end
 
   it "should send back the correct handshake response" do
@@ -217,6 +217,18 @@ describe "WebSocket server draft76" do
         # Sends second half of the request
         connection.send_data(data[(data.length / 2)..-1])
       end
+    }
+  end
+
+  it "should report that close codes are not supported" do
+    em {
+      start_server { |ws|
+        ws.onopen {
+          ws.supports_close_codes?.should == false
+          done
+        }
+      }
+      start_client
     }
   end
 end

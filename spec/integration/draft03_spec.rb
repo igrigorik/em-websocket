@@ -35,20 +35,20 @@ describe "draft03" do
     }
   end
 
+  def start_server
+    EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+      yield ws
+    }
+  end
+
+  def start_client
+    client = EM.connect('0.0.0.0', 12345, Draft03FakeWebSocketClient)
+    client.send_data(format_request(@request))
+    yield client if block_given?
+  end
+
   it_behaves_like "a websocket server" do
     let(:version) { 3 }
-
-    def start_server
-      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
-        yield ws
-      }
-    end
-
-    def start_client
-      client = EM.connect('0.0.0.0', 12345, Draft03FakeWebSocketClient)
-      client.send_data(format_request(@request))
-      yield client if block_given?
-    end
   end
 
   # These examples are straight from the spec
@@ -56,20 +56,16 @@ describe "draft03" do
   describe "examples from the spec" do
     it "should accept a single-frame text message" do
       em {
-        EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+        start_server { |ws|
           ws.onmessage { |msg|
             msg.should == 'Hello'
             done
           }
         }
-
-        # Create a fake client which sends draft 76 handshake
-        connection = EM.connect('0.0.0.0', 12345, FakeWebSocketClient)
-        connection.send_data(format_request(@request))
-
-        # Send frame
-        connection.onopen {
-          connection.send_data("\x04\x05Hello")
+        start_client { |client|
+          client.onopen {
+            client.send_data("\x04\x05Hello")
+          }
         }
       }
     end
@@ -266,6 +262,18 @@ describe "draft03" do
             done
           end
         }
+      }
+    end
+
+    it "should report that close codes are not supported" do
+      em {
+        start_server { |ws|
+          ws.onopen {
+            ws.supports_close_codes?.should == false
+            done
+          }
+        }
+        start_client
       }
     end
   end

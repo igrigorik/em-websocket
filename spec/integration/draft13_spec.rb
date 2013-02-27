@@ -31,20 +31,20 @@ describe "draft13" do
     }
   end
 
+  def start_server
+    EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+      yield ws
+    }
+  end
+
+  def start_client
+    client = EM.connect('0.0.0.0', 12345, Draft07FakeWebSocketClient)
+    client.send_data(format_request(@request))
+    yield client if block_given?
+  end
+
   it_behaves_like "a websocket server" do
     let(:version) { 13 }
-
-    def start_server
-      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
-        yield ws
-      }
-    end
-
-    def start_client
-      client = EM.connect('0.0.0.0', 12345, Draft07FakeWebSocketClient)
-      client.send_data(format_request(@request))
-      yield client if block_given?
-    end
   end
 
   it "should send back the correct handshake response" do
@@ -91,6 +91,18 @@ describe "draft13" do
         # This is what a pong looks like
         connection.send_data("\x8a\x05hello")
       }
+    }
+  end
+
+  it "should report that close codes are supported" do
+    em {
+      start_server { |ws|
+        ws.onopen {
+          ws.supports_close_codes?.should == true
+          done
+        }
+      }
+      start_client
     }
   end
 end

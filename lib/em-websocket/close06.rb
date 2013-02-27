@@ -11,6 +11,8 @@ module EventMachine
         end
         @state = :closing
       end
+
+      def supports_close_codes?; true; end
     end
   end
 end
