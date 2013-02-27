@@ -76,11 +76,13 @@ module EventMachine
         close_websocket_private(e.code)
       rescue => e
         debug [:error, e]
-        # These are application errors - raise unless onerror defined
-        trigger_on_error(e) || raise(e)
+
         # There is no code defined for application errors, so use 3000
         # (which is reserved for frameworks)
         close_websocket_private(3000)
+
+        # These are application errors - raise unless onerror defined
+        trigger_on_error(e) || raise(e)
       end
 
       def unbind
