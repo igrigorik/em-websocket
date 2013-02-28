@@ -66,6 +66,10 @@ module EventMachine
         @headers["origin"] || @headers["sec-websocket-origin"] || nil
       end
 
+      def secure?
+        @secure
+      end
+
       private
 
       def process(headers, remains)

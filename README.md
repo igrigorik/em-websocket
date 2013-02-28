@@ -88,6 +88,8 @@ EM::WebSocket.start({
 end
 ```
 
+It's possible to check whether an incoming connection is secure by reading `handshake.secure?` in the onopen callback.
+
 ## Running behind an SSL Proxy/Terminator, like Stunnel
 
 The `:secure_proxy => true` option makes it possible to use em-websocket behind a secure SSL proxy/terminator like [Stunnel](http://www.stunnel.org/) which does the actual encryption & decryption.
