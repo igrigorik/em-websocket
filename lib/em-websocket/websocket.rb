@@ -17,6 +17,10 @@ module EventMachine
       def code; 1002; end
     end
 
+    class InvalidDataError < WSProtocolError
+      def code; 1007; end
+    end
+
     # 1009: Message too big to process
     class WSMessageTooBigError < WSProtocolError
       def code; 1009; end
