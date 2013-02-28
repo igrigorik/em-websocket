@@ -130,6 +130,26 @@ describe "draft06" do
     }
   end
 
+  it "should return close code 1005 if no code was specified" do
+    em {
+      start_server { |ws|
+        ws.onclose { |event|
+          event.should == {
+            :code => 1005,
+            :reason => "",
+            :was_clean => true,
+          }
+          done
+        }
+      }
+      start_client { |client|
+        client.onopen {
+          client.send_frame(:close, '')
+        }
+      }
+    }
+  end
+
   it "should report that close codes are supported" do
     em {
       start_server { |ws|

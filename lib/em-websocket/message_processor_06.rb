@@ -27,13 +27,13 @@ module EventMachine
           elsif @state == :connected
             # Acknowlege close & echo status back to client
             # The connection is considered closed
-            close_data = [status_code].pack('n')
+            close_data = [status_code || 1000].pack('n')
             send_frame(:close, close_data)
             @state = :closed
           end
 
           @connection.trigger_on_close({
-            :code => status_code,
+            :code => status_code || 1005,
             :reason => application_data,
             :was_clean => true,
           })
