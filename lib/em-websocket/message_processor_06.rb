@@ -29,6 +29,7 @@ module EventMachine
             # The connection is considered closed
             close_data = [status_code || 1000].pack('n')
             send_frame(:close, close_data)
+            @connection.close_connection_after_writing
             @state = :closed
           end
 
