@@ -1,4 +1,5 @@
 require 'helper'
+require 'integration/shared_examples'
 
 describe "draft06" do
   include EM::SpecHelper
@@ -32,16 +33,21 @@ describe "draft06" do
   
   def start_server
     EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
-      yield ws
+      yield ws if block_given?
     }
   end
 
   def start_client
-    client = EM.connect('0.0.0.0', 12345, Draft03FakeWebSocketClient)
+    client = EM.connect('0.0.0.0', 12345, Draft05FakeWebSocketClient)
     client.send_data(format_request(@request))
     yield client if block_given?
+    return client
   end
   
+  it_behaves_like "a websocket server" do
+    let(:version) { 6 }
+  end
+
   it "should open connection" do
     em {
       start_server { |server|
@@ -80,6 +86,82 @@ describe "draft06" do
           client.send_data("\x00\x00\x01\x00\x84\x05Ielln")
         }
       }
+    }
+  end
+
+  it "should return was_clean=false and code 1006 when connection does not close cleanly" do
+    em {
+      start_server { |ws|
+        ws.onclose { |event|
+          event.should == {
+            :code => 1006,
+            :was_clean => false,
+          }
+          done
+        }
+      }
+      start_client { |client|
+        client.onopen {
+          # 1: Close tcp connection (no close handshake)
+          client.close_connection
+        }
+      }
+    }
+  end
+
+  it "should return close code and reason if closed via handshake" do
+    em {
+      start_server { |ws|
+        ws.onclose { |event|
+          # 2. Receive close event in server
+          event.should == {
+            :code => 4004,
+            :reason => "close reason",
+            :was_clean => true,
+          }
+          done
+        }
+      }
+      start_client { |client|
+        client.onopen {
+          # 1: Send close handshake
+          close_data = [4004].pack('n')
+          close_data << "close reason"
+          client.send_frame(:close, close_data)
+        }
+      }
+    }
+  end
+
+  it "should return close code 1005 if no code was specified" do
+    em {
+      start_server { |ws|
+        ws.onclose { |event|
+          event.should == {
+            :code => 1005,
+            :reason => "",
+            :was_clean => true,
+          }
+          done
+        }
+      }
+      start_client { |client|
+        client.onopen {
+          client.send_frame(:close, '')
+        }
+      }
+    }
+  end
+
+  it "should report that close codes are supported" do
+    em {
+      start_server { |ws|
+        ws.onopen {
+          ws.supports_close_codes?.should == true
+          done
+        }
+      }
+      start_client
     }
   end
 end

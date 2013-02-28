@@ -9,19 +9,20 @@ describe "WebSocket server draft75" do
   include EM::SpecHelper
   default_timeout 1
 
+  def start_server
+    EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+      yield ws if block_given?
+    }
+  end
+
+  def start_client
+    client = Draft75WebSocketClient.new
+    yield client if block_given?
+    return client
+  end
+
   it_behaves_like "a websocket server" do
     let(:version) { 75 }
-
-    def start_server
-      EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
-        yield ws
-      }
-    end
-
-    def start_client
-      client = Draft75WebSocketClient.new
-      yield client if block_given?
-    end
   end
 
   it "should automatically complete WebSocket handshake" do
@@ -38,11 +39,11 @@ describe "WebSocket server draft75" do
         }
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
+      start_server { |ws|
         ws.onopen {
           ws.send MSG
         }
-      end
+      }
     }
   end
 
@@ -62,7 +63,7 @@ describe "WebSocket server draft75" do
         }
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
+      start_server { |ws|
         ws.onopen {}
         ws.onclose {}
         ws.onmessage {|msg|
@@ -71,7 +72,7 @@ describe "WebSocket server draft75" do
 
           EventMachine.stop if received.size == messages.size
         }
-      end
+      }
     }
   end
 
@@ -87,13 +88,13 @@ describe "WebSocket server draft75" do
         http.stream{|msg|}
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
+      start_server { |ws|
         ws.onopen {}
         ws.onclose {
           ws.state.should == :closed
           EventMachine.stop
         }
-      end
+      }
     }
   end
 
@@ -105,7 +106,7 @@ describe "WebSocket server draft75" do
         http.callback { fail }
       end
 
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 12345) do |ws|
+      start_server { |ws|
         ws.onopen { fail }
         ws.onclose { EventMachine.stop }
         ws.onerror {|e|
@@ -113,7 +114,19 @@ describe "WebSocket server draft75" do
           e.message.should match('Not an upgrade request')
           EventMachine.stop
         }
-      end
+      }
+    }
+  end
+
+  it "should report that close codes are not supported" do
+    em {
+      start_server { |ws|
+        ws.onopen {
+          ws.supports_close_codes?.should == false
+          done
+        }
+      }
+      start_client
     }
   end
 end

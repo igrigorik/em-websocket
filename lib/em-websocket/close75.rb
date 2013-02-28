@@ -5,6 +5,8 @@ module EventMachine
         @state = :closed
         @connection.close_connection_after_writing
       end
+
+      def supports_close_codes?; false; end
     end
   end
 end

@@ -31,6 +31,43 @@ EM.run {
 }
 ```
 
+## Protocols supported, and protocol specific functionality
+
+Supports all WebSocket protocols in use in the wild (and a few that are not): drafts 75, 76, 1-17, rfc.
+
+While some of the changes between protocols are unimportant from the point of view of application developers, a few drafts did introduce new functionality. It's possible to easily test for this functionality by using
+
+### Ping & pong supported
+
+Call `ws.pingable?` to check whether ping & pong is supported by the protocol in use.
+
+It's possible to send a ping frame (`ws.ping(body = '')`), which the client must respond to with a pong, or the server can send an unsolicited pong frame (`ws.pong(body = '')`) which the client should not respond to. These methods can be used regardless of protocol version; they return true if the protocol supports ping&pong or false otherwise.
+
+When receiving a ping, the server will automatically respond with a pong as the spec requires (so you should _not_ write an onping handler that replies with a pong), however it is possible to bind to ping & pong events if desired by using the `onping` and `onpong` methods.
+
+### Close codes and reasons
+
+A WebSocket connection can be closed cleanly, regardless of protocol, by calling `ws.close(code = nil, body = nil)`.
+
+Early protocols just close the TCP connection, draft 3 introduced a close handshake, and draft 6 added close codes and reasons to the close handshake. Call `ws.supports_close_codes?` to check whether close codes are supported (i.e. the protocol version is 6 or above).
+
+The `onclose` callback is passed a hash which may contain following keys (depending on the protocol version):
+
+* `was_clean`: boolean indicating whether the connection was closed via the close handshake.
+* `code`: the close code
+* `reason`: the close reason
+
+Acceptable close codes are defined in the WebSocket rfc (<http://tools.ietf.org/html/rfc6455#section-7.4>). The following codes can be supplies when calling `ws.close(code)`:
+
+* 1000: a generic normal close
+* range 3xxx: reserved for libraries, frameworks, and applications (and can be registered with IANA)
+* range 4xxx: for private use
+
+If unsure use a code in the 4xxx range. em-websocket may also close a connection with one of the following close codes:
+
+* 1002: WebSocket protocol error.
+* 1009: Message too big to process. By default em-websocket will accept frames up to 10MB in size. If a frame is larger than this the connection will be closed without reading the frame data. The limit can be overriden globally (`EM::WebSocket.max_frame_size = bytes`) or on a specific connection (`ws.max_frame_size = bytes`).
+
 ## Secure server
 
 It is possible to accept secure `wss://` connections by passing `:secure => true` when opening the connection. Pass a `:tls_options` hash containing keys as described in http://eventmachine.rubyforge.org/EventMachine/Connection.html#start_tls-instance_method

@@ -51,8 +51,13 @@ module EventMachine
       end
 
       def unbind
-        @state = :closed
-        @connection.trigger_on_close
+        unless @state == :closed
+          @state = :closed
+          @connection.trigger_on_close({
+            :code => 1006,
+            :was_clean => false,
+          })
+        end
       end
 
       def ping

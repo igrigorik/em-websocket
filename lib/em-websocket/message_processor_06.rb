@@ -24,14 +24,20 @@ module EventMachine
             # sent or received on this connection
             @connection.close_connection
             @state = :closed
-          else
-            # Acknowlege close
+          elsif @state == :connected
+            # Acknowlege close & echo status back to client
             # The connection is considered closed
-            send_frame(:close, '')
-            @state = :closed
+            close_data = [status_code || 1000].pack('n')
+            send_frame(:close, close_data)
             @connection.close_connection_after_writing
-            # TODO: Send close status code and body to app code
+            @state = :closed
           end
+
+          @connection.trigger_on_close({
+            :code => status_code || 1005,
+            :reason => application_data,
+            :was_clean => true,
+          })
         when :ping
           # Pong back the same data
           send_frame(:pong, application_data)
@@ -41,6 +47,9 @@ module EventMachine
         when :text
           if application_data.respond_to?(:force_encoding)
             application_data.force_encoding("UTF-8")
+            unless application_data.valid_encoding?
+              raise InvalidDataError, "Invalid UTF8 data"
+            end
           end
           @connection.trigger_on_message(application_data)
         when :binary

@@ -19,8 +19,8 @@ module EventMachine
       def trigger_on_open(handshake)
         @onopen.call(handshake) if @onopen
       end
-      def trigger_on_close
-        @onclose.call if @onclose
+      def trigger_on_close(event = {})
+        @onclose.call(event) if @onclose
       end
       def trigger_on_ping(data)
         @onping.call(data) if @onping
@@ -47,16 +47,16 @@ module EventMachine
       # Use this method to close the websocket connection cleanly
       # This sends a close frame and waits for acknowlegement before closing
       # the connection
-      def close_websocket(code = nil, body = nil)
-        if code && !(4000..4999).include?(code)
-          raise "Application code may only use codes in the range 4000-4999"
+      def close(code = nil, body = nil)
+        if code && !acceptable_close_code?(code)
+          raise "Application code may only use codes from 1000, 3000-4999"
         end
-
-        # If code not defined then set to 1000 (normal closure)
-        code ||= 1000
 
         close_websocket_private(code, body)
       end
+
+      # Deprecated, to be removed in version 0.6
+      alias :close_websocket :close
 
       def post_init
         start_tls(@tls_options) if @secure
@@ -73,14 +73,16 @@ module EventMachine
       rescue WSProtocolError => e
         debug [:error, e]
         trigger_on_error(e)
-        close_websocket_private(e.code)
+        close_websocket_private(e.code, e.message)
       rescue => e
         debug [:error, e]
-        # These are application errors - raise unless onerror defined
-        trigger_on_error(e) || raise(e)
+
         # There is no code defined for application errors, so use 3000
         # (which is reserved for frameworks)
-        close_websocket_private(3000)
+        close_websocket_private(3000, "Application error")
+
+        # These are application errors - raise unless onerror defined
+        trigger_on_error(e) || raise(e)
       end
 
       def unbind
@@ -219,6 +221,14 @@ module EventMachine
         end
       end
 
+      def supports_close_codes?
+        if @handler
+          @handler.supports_close_codes?
+        else
+          raise WebSocketError, "Cannot test before onopen callback"
+        end
+      end
+
       def state
         @handler ? @handler.state : :handshake
       end
@@ -243,13 +253,26 @@ module EventMachine
         close_connection
       end
 
-      def close_websocket_private(code, body = nil)
+      def close_websocket_private(code, body)
         if @handler
           debug [:closing, code]
           @handler.close_websocket(code, body)
         else
           # The handshake hasn't completed - should be safe to terminate
           abort
+        end
+      end
+
+      # Accept 1000, 3xxx or 4xxx
+      #
+      # This is consistent with the spec and what browsers have implemented
+      # Frameworks should use 3xxx while applications should use 4xxx
+      def acceptable_close_code?(code)
+        case code
+        when 1000, (3000..4999)
+          true
+        else
+          false
         end
       end
     end

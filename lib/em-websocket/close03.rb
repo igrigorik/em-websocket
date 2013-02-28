@@ -6,6 +6,8 @@ module EventMachine
         send_frame(:close, '')
         @state = :closing
       end
+
+      def supports_close_codes?; false; end
     end
   end
 end
