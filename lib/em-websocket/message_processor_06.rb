@@ -24,13 +24,18 @@ module EventMachine
             # sent or received on this connection
             @connection.close_connection
             @state = :closed
-          else
+          elsif @state == :connected
             # Acknowlege close
             # The connection is considered closed
             send_frame(:close, '')
             @state = :closed
-            # TODO: Send close status code and body to app code
           end
+
+          @connection.trigger_on_close({
+            :code => status_code,
+            :reason => application_data,
+            :was_clean => true,
+          })
         when :ping
           # Pong back the same data
           send_frame(:pong, application_data)

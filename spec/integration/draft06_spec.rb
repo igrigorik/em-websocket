@@ -89,6 +89,47 @@ describe "draft06" do
     }
   end
 
+  it "should return was_clean=false if connection closed without handshake" do
+    em {
+      start_server { |ws|
+        ws.onclose { |event|
+          event.should == {:was_clean => false}
+          done
+        }
+      }
+      start_client { |client|
+        client.onopen {
+          # 1: Close tcp connection (no close handshake)
+          client.close_connection
+        }
+      }
+    }
+  end
+
+  it "should return close code and reason if closed via handshake" do
+    em {
+      start_server { |ws|
+        ws.onclose { |event|
+          # 2. Receive close event in server
+          event.should == {
+            :code => 4004,
+            :reason => "close reason",
+            :was_clean => true,
+          }
+          done
+        }
+      }
+      start_client { |client|
+        client.onopen {
+          # 1: Send close handshake
+          close_data = [4004].pack('n')
+          close_data << "close reason"
+          client.send_frame(:close, close_data)
+        }
+      }
+    }
+  end
+
   it "should report that close codes are supported" do
     em {
       start_server { |ws|
