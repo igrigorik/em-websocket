@@ -46,6 +46,36 @@ shared_examples_for "a websocket server" do
     }
   end
 
+  it "should allow connection to be close with valid close code" do
+    em {
+      start_server { |ws|
+        ws.onopen {
+          ws.close(4004, "Bye bye")
+          done
+        }
+      }
+
+      start_client
+      # TODO: Use a real client which understands how to respond to closing
+      # handshakes, sending the handshake currently untested
+    }
+  end
+
+  it "should raise error if if invalid close code is used" do
+    em {
+      start_server { |ws|
+        ws.onopen {
+          lambda {
+            ws.close(2000)
+          }.should raise_error("Application code may only use codes from 1000, 3000-4999")
+          done
+        }
+      }
+
+      start_client
+    }
+  end
+
   it "should call onerror if an application error raised in onopen" do
     em {
       start_server { |ws|
