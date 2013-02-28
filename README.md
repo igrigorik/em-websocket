@@ -49,8 +49,6 @@ When receiving a ping, the server will automatically respond with a pong as the 
 
 A WebSocket connection can be closed cleanly, regardless of protocol, by calling `ws.close(code = nil, body = nil)`.
 
-Acceptable close codes are defined in the WebSocket rfc (<http://tools.ietf.org/html/rfc6455#section-7.4>). In short code 1000 is a generic normal close, range 3xxx are designed for libraries, framesworks, and applications, and can be registered, while range 4xxx is a free for all. You should probably be using the 4xxx range :)
-
 Early protocols just close the TCP connection, draft 3 introduced a close handshake, and draft 6 added close codes and reasons to the close handshake. Call `ws.supports_close_codes?` to check whether close codes are supported (i.e. the protocol version is 6 or above).
 
 The `onclose` callback is passed a hash which may contain following keys (depending on the protocol version):
@@ -58,6 +56,17 @@ The `onclose` callback is passed a hash which may contain following keys (depend
 * `was_clean`: boolean indicating whether the connection was closed via the close handshake.
 * `code`: the close code
 * `reason`: the close reason
+
+Acceptable close codes are defined in the WebSocket rfc (<http://tools.ietf.org/html/rfc6455#section-7.4>). The following codes can be supplies when calling `ws.close(code)`:
+
+* 1000: a generic normal close
+* range 3xxx: reserved for libraries, frameworks, and applications (and can be registered with IANA)
+* range 4xxx: for private use
+
+If unsure use a code in the 4xxx range. em-websocket may also close a connection with one of the following close codes:
+
+* 1002: WebSocket protocol error.
+* 1009: Message too big to process. By default em-websocket will accept frames up to 10MB in size. If a frame is larger than this the connection will be closed without reading the frame data. The limit can be overriden globally (`EM::WebSocket.max_frame_size = bytes`) or on a specific connection (`ws.max_frame_size = bytes`).
 
 ## Secure server
 
