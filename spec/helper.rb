@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'rspec'
 require 'em-spec/rspec'
-require 'pp'
 require 'em-http'
 
 require 'em-websocket'
@@ -35,65 +34,70 @@ class FakeWebSocketClient < EM::Connection
     end
   end
 
-  def send(data)
-    send_data("\x00#{data}\xff")
+  def send(application_data)
+    send_frame(:text, application_data)
+  end
+
+  def send_frame(type, application_data)
+    send_data construct_frame(type, application_data)
   end
 
   def unbind
     @onclose.call if @onclose
   end
+
+  private
+
+  def construct_frame(type, data)
+    "\x00#{data}\xff"
+  end
 end
 
 class Draft03FakeWebSocketClient < FakeWebSocketClient
-  def send(application_data)
-    frame = ''
-    opcode = 4 # fake only supports text frames
-    byte1 = opcode # since more, rsv1-3 are 0
-    frame << byte1
+  private
 
-    length = application_data.size
+  def construct_frame(type, data)
+    frame = ""
+    frame << EM::WebSocket::Framing03::FRAME_TYPES[type]
+    frame << encoded_length(data.size)
+    frame << data
+  end
+
+  def encoded_length(length)
     if length <= 125
-      byte2 = length # since rsv4 is 0
-      frame << byte2
+      [length].pack('C') # since rsv4 is 0
     elsif length < 65536 # write 2 byte length
-      frame << 126
-      frame << [length].pack('n')
+      "\126#{[length].pack('n')}"
     else # write 8 byte length
-      frame << 127
-      frame << [length >> 32, length & 0xFFFFFFFF].pack("NN")
+      "\127#{[length >> 32, length & 0xFFFFFFFF].pack("NN")}"
     end
-
-    frame << application_data
-
-    send_data(frame)
   end
 end
 
-class Draft07FakeWebSocketClient < FakeWebSocketClient
-  def send(application_data)
-    frame = ''
-    opcode = 1 # fake only supports text frames
-    byte1 = opcode | 0b10000000 # since more, rsv1-3 are 0
-    frame << byte1
+class Draft05FakeWebSocketClient < Draft03FakeWebSocketClient
+  private
 
-    length = application_data.size
-    if length <= 125
-      byte2 = length # since rsv4 is 0
-      frame << byte2
-    elsif length < 65536 # write 2 byte length
-      frame << 126
-      frame << [length].pack('n')
-    else # write 8 byte length
-      frame << 127
-      frame << [length >> 32, length & 0xFFFFFFFF].pack("NN")
-    end
-
-    frame << application_data
-
-    send_data(frame)
+  def construct_frame(type, data)
+    frame = ""
+    frame << "\x00\x00\x00\x00" # Mask with nothing for simplicity
+    frame << (EM::WebSocket::Framing05::FRAME_TYPES[type] | 0b10000000)
+    frame << encoded_length(data.size)
+    frame << data
   end
 end
 
+class Draft07FakeWebSocketClient < Draft05FakeWebSocketClient
+  private
+
+  def construct_frame(type, data)
+    frame = ""
+    frame << (EM::WebSocket::Framing07::FRAME_TYPES[type] | 0b10000000)
+    # Should probably mask the data, but I get away without bothering since
+    # the server doesn't enforce that incoming frames are masked
+    frame << encoded_length(data.size)
+    frame << data
+  end
+end
 
 # Wrap EM:HttpRequest in a websocket like interface so that it can be used in the specs with the same interface as FakeWebSocketClient
 class Draft75WebSocketClient
