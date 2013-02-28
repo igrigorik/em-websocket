@@ -29,6 +29,23 @@ shared_examples_for "a websocket server" do
     }
   end
 
+  it "should send messages successfully" do
+    em {
+      start_server { |ws|
+        ws.onmessage { |message|
+          message.should == "hello server"
+          done
+        }
+      }
+
+      start_client { |client|
+        client.onopen {
+          client.send("hello server")
+        }
+      }
+    }
+  end
+
   it "should call onerror if an application error raised in onopen" do
     em {
       start_server { |ws|
