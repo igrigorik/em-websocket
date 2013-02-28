@@ -1,4 +1,5 @@
 require 'helper'
+require 'integration/shared_examples'
 
 describe "draft05" do
   include EM::SpecHelper
@@ -28,23 +29,14 @@ describe "draft05" do
   end
 
   def start_client
-    client = EM.connect('0.0.0.0', 12345, Draft03FakeWebSocketClient)
+    client = EM.connect('0.0.0.0', 12345, Draft05FakeWebSocketClient)
     client.send_data(format_request(@request))
     yield client if block_given?
     return client
   end
   
-  it "should open connection" do
-    em {
-      start_server { |server|
-        server.onopen {
-          server.instance_variable_get(:@handler).class.should == EventMachine::WebSocket::Handler05
-          done
-        }
-      }
-      
-      start_client
-    }
+  it_behaves_like "a websocket server" do
+    let(:version) { 5 }
   end
 
   it "should report that close codes are not supported" do
