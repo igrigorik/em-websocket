@@ -89,11 +89,14 @@ describe "draft06" do
     }
   end
 
-  it "should return was_clean=false if connection closed without handshake" do
+  it "should return was_clean=false and code 1006 when connection does not close cleanly" do
     em {
       start_server { |ws|
         ws.onclose { |event|
-          event.should == {:was_clean => false}
+          event.should == {
+            :code => 1006,
+            :was_clean => false,
+          }
           done
         }
       }
