@@ -10,11 +10,6 @@ module EventMachine
           raise HandshakeError, "sec-websocket-key header is required"
         end
 
-        # Optional
-        origin = headers['sec-websocket-origin']
-        protocols = headers['sec-websocket-protocol']
-        extensions = headers['sec-websocket-extensions']
-
         string_to_sign = "#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
         signature = Base64.encode64(Digest::SHA1.digest(string_to_sign)).chomp
 

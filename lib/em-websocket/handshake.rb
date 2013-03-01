@@ -24,7 +24,7 @@ module EventMachine
       def receive_data(data)
         @parser << data
 
-        if @headers
+        if defined? @headers
           process(@headers, @parser.upgrade_data)
         end
       rescue HTTP::Parser::Error => e

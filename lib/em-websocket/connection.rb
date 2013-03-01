@@ -14,22 +14,22 @@ module EventMachine
       def onpong(&blk);     @onpong = blk;    end
 
       def trigger_on_message(msg)
-        @onmessage.call(msg) if @onmessage
+        @onmessage.call(msg) if defined? @onmessage
       end
       def trigger_on_open(handshake)
-        @onopen.call(handshake) if @onopen
+        @onopen.call(handshake) if defined? @onopen
       end
       def trigger_on_close(event = {})
-        @onclose.call(event) if @onclose
+        @onclose.call(event) if defined? @onclose
       end
       def trigger_on_ping(data)
-        @onping.call(data) if @onping
+        @onping.call(data) if defined? @onping
       end
       def trigger_on_pong(data)
-        @onpong.call(data) if @onpong
+        @onpong.call(data) if defined? @onpong
       end
       def trigger_on_error(reason)
-        return false unless @onerror
+        return false unless defined? @onerror
         @onerror.call(reason)
         true
       end
@@ -40,6 +40,8 @@ module EventMachine
         @secure = options[:secure] || false
         @secure_proxy = options[:secure_proxy] || false
         @tls_options = options[:tls_options] || {}
+
+        @handler = nil
 
         debug [:initialize]
       end
@@ -242,7 +244,7 @@ module EventMachine
       # correct close code (1009) immediately after receiving the frame header
       #
       def max_frame_size
-        @max_frame_size || WebSocket.max_frame_size
+        defined?(@max_frame_size) ? @max_frame_size : WebSocket.max_frame_size
       end
 
       private

@@ -6,6 +6,7 @@ module EventMachine
       def initialize_framing
         @data = ''
         @application_data_buffer = '' # Used for MORE frames
+        @frame_type = nil
       end
       
       def process_data(newdata)

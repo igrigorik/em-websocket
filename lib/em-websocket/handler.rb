@@ -2,7 +2,7 @@ module EventMachine
   module WebSocket
     class Handler
       def self.klass_factory(version)
-        handler_klass = case version
+        case version
         when 75
           Handler75
         when 76

@@ -26,10 +26,10 @@ class FakeWebSocketClient < EM::Connection
     # puts "RECEIVE DATA #{data}"
     if @state == :new
       @handshake_response = data
-      @onopen.call if @onopen
+      @onopen.call if defined? @onopen
       @state = :open
     else
-      @onmessage.call(data) if @onmessage
+      @onmessage.call(data) if defined? @onmessage
       @packets << data
     end
   end
@@ -43,7 +43,7 @@ class FakeWebSocketClient < EM::Connection
   end
 
   def unbind
-    @onclose.call if @onclose
+    @onclose.call if defined? @onclose
   end
 
   private
@@ -111,10 +111,10 @@ class Draft75WebSocketClient
       :timeout => 0,
       :origin => 'http://example.com',
     })
-    @ws.errback { @onerror.call if @onerror }
-    @ws.callback { @onopen.call if @onopen }
-    @ws.stream { |msg| @onmessage.call(msg) if @onmessage }
-    @ws.disconnect { @onclose.call if @onclose }
+    @ws.errback { @onerror.call if defined? @onerror }
+    @ws.callback { @onopen.call if defined? @onopen }
+    @ws.stream { |msg| @onmessage.call(msg) if defined? @onmessage }
+    @ws.disconnect { @onclose.call if defined? @onclose }
   end
 
   def send(message)

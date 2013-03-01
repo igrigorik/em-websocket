@@ -20,7 +20,7 @@ module EventMachine
       end
 
       def getbyte(index)
-        if @masking_key
+        if defined? @masking_key
           masked_char = super
           masked_char ? masked_char ^ @masking_key.getbyte(index % 4) : nil
         else

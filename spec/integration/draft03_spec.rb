@@ -221,7 +221,7 @@ describe "draft03" do
         }
 
         # 1. Create a fake client which sends draft 76 handshake
-        connection = start_client
+        start_client
       }
     end
 
