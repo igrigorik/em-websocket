@@ -35,7 +35,7 @@ describe "WebSocket server draft76" do
   end
   
   def start_server
-    EM::WebSocket.start(:host => "0.0.0.0", :port => 12345) { |ws|
+    EM::WebSocket.run(:host => "0.0.0.0", :port => 12345) { |ws|
       yield ws if block_given?
     }
   end
