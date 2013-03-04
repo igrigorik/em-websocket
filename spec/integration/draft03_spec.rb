@@ -170,7 +170,7 @@ describe "draft03" do
       }
     end
 
-    it "should close the connection on receiving a close acknowlegement" do
+    it "should close the connection on receiving a close acknowlegement and call onclose with close code 1005 and was_clean=true (initiated by server)" do
       em {
         ack_received = false
 
@@ -180,6 +180,16 @@ describe "draft03" do
             EM.next_tick {
               ws.close
             }
+          }
+
+          # 5. Onclose event on server
+          ws.onclose { |event|
+            event.should == {
+              :code => 1005,
+              :reason => "",
+              :was_clean => true,
+            }
+            done
           }
         }
 
@@ -196,7 +206,28 @@ describe "draft03" do
         # 4. Check that connection is closed _after_ the ack
         connection.onclose {
           ack_received.should == true
-          done
+        }
+      }
+    end
+
+    # it "should repur"
+    #
+    it "should return close code 1005 and was_clean=true after closing handshake (initiated by client)" do
+      em {
+        start_server { |ws|
+          ws.onclose { |event|
+            event.should == {
+              :code => 1005,
+              :reason => "",
+              :was_clean => true,
+            }
+            done
+          }
+        }
+        start_client { |client|
+          client.onopen {
+            client.send_data("\x01\x00")
+          }
         }
       }
     end

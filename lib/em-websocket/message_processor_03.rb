@@ -6,6 +6,11 @@ module EventMachine
       def message(message_type, extension_data, application_data)
         case message_type
         when :close
+          @close_info = {
+            :code => 1005,
+            :reason => "",
+            :was_clean => true,
+          }
           if @state == :closing
             # TODO: Check that message body matches sent data
             # We can close connection immediately since there is no more data
