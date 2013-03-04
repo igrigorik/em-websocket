@@ -23,5 +23,7 @@ describe EM::WebSocket::MaskedString do
     t.getbyte(4).should == 0x03
     t.read_mask
     t.getbyte(4).should == 0x01
+    t.unset_mask
+    t.getbyte(4).should == 0x03
   end
 end
