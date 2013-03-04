@@ -15,10 +15,6 @@ module EventMachine
         @masking_key = nil
       end
 
-      def slice_mask
-        slice!(0, 4)
-      end
-
       def getbyte(index)
         if defined?(@masking_key) && @masking_key
           masked_char = super
