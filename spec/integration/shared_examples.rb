@@ -46,7 +46,7 @@ shared_examples_for "a websocket server" do
     }
   end
 
-  it "should allow connection to be close with valid close code" do
+  it "should allow connection to be closed with valid close code" do
     em {
       start_server { |ws|
         ws.onopen {
@@ -73,6 +73,39 @@ shared_examples_for "a websocket server" do
       }
 
       start_client
+    }
+  end
+
+  it "should call onclose with was_clean set to false if connection closed without closing handshake by server" do
+    em {
+      start_server { |ws|
+        ws.onopen {
+          # Close tcp connection (no close handshake)
+          ws.close_connection
+        }
+        ws.onclose { |event|
+          event.should == {:code => 1006, :was_clean => false}
+          done
+        }
+      }
+      start_client
+    }
+  end
+
+  it "should call onclose with was_clean set to false if connection closed without closing handshake by client" do
+    em {
+      start_server { |ws|
+        ws.onclose { |event|
+          event.should == {:code => 1006, :was_clean => false}
+          done
+        }
+      }
+      start_client { |client|
+        client.onopen {
+          # Close tcp connection (no close handshake)
+          client.close_connection
+        }
+      }
     }
   end
 
