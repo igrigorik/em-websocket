@@ -151,7 +151,7 @@ module EventMachine
       end
 
       def opcode_to_type(opcode)
-        FRAME_TYPES_INVERSE[opcode] || raise(WSProtocolError, "Unknown opcode")
+        FRAME_TYPES_INVERSE[opcode] || raise(WSProtocolError, "Unknown opcode #{opcode}")
       end
 
       def data_frame?(type)

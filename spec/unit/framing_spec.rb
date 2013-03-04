@@ -265,7 +265,7 @@ describe EM::WebSocket::Framing07 do
       lambda {
         # Opcode 3 is not supported by this draft
         @f << "\x83\x05Hello"
-      }.should raise_error(EventMachine::WebSocket::WSProtocolError, "Unknown opcode")
+      }.should raise_error(EventMachine::WebSocket::WSProtocolError, "Unknown opcode 3")
     end
 
     it "should accept a fragmented unmasked text message in 3 frames" do
