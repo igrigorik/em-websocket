@@ -11,12 +11,10 @@ module EventMachine
             # We can close connection immediately since there is no more data
             # is allowed to be sent or received on this connection
             @connection.close_connection
-            @state = :closed
           else
             # Acknowlege close
             # The connection is considered closed
             send_frame(:close, application_data)
-            @state = :closed
             @connection.close_connection_after_writing
           end
         when :ping

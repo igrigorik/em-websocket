@@ -220,4 +220,20 @@ describe "WebSocket server draft76" do
       start_client
     }
   end
+
+  it "should call onclose when the server closes the connection [antiregression]" do
+    em {
+      start_server { |ws|
+        ws.onopen {
+          EM.add_timer(0.1) {
+            ws.close()
+          }
+        }
+        ws.onclose {
+          done
+        }
+      }
+      start_client
+    }
+  end
 end

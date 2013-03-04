@@ -19,25 +19,23 @@ module EventMachine
           
           debug [:close_frame_received, status_code, application_data]
           
+          @close_info = {
+            :code => status_code || 1005,
+            :reason => application_data,
+            :was_clean => true,
+          }
+
           if @state == :closing
             # We can close connection immediately since no more data may be
             # sent or received on this connection
             @connection.close_connection
-            @state = :closed
           elsif @state == :connected
             # Acknowlege close & echo status back to client
             # The connection is considered closed
             close_data = [status_code || 1000].pack('n')
             send_frame(:close, close_data)
             @connection.close_connection_after_writing
-            @state = :closed
           end
-
-          @connection.trigger_on_close({
-            :code => status_code || 1005,
-            :reason => application_data,
-            :was_clean => true,
-          })
         when :ping
           # Pong back the same data
           send_frame(:pong, application_data)
