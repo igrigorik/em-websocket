@@ -1,6 +1,21 @@
 = Changelog
 
-== 0.4.0 / ?
+== 0.5.0 / 2013-03-05
+
+- new features:
+  - onclose handler is now passed a hash containing  was_clean (set to true in drafts 03 and above when a connection is closed with a closing handshake, either by the server or the client), the close code, and reason (drafts 06 and above). Close code 1005 indicates that no code was supplied, and 1006 that the connection was closed abnormally.
+  - use Connection#support_close_codes? to easily check whether close codes are supported by the WebSocket protocol (drafts 06 and above)
+  - closes connection with 1007 close code if text frame contains invalid UTF8
+  - added Handshake#secure? for checking whether the connection is secure (either ssl or behind an ssl proxy)
+
+- changed:
+  - Defaults to sending no close code rather than 1000 (consistent with browsers)
+  - Allows sending a 3xxx close code
+  - Renamed Connection#close_websocket to Connection#close (again for consistency with browsers). Old method is available till 0.6.
+  - Sends reasons with internally generated closure (previously only sent code)
+  - Echos close code when replying to close handshake
+
+== 0.4.0 / 2013-01-22
 
 - new features:
   - on_open handler is now passed a handshake object which exposes the request headers, path, and query parameters
