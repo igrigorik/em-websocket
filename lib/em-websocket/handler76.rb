@@ -1,3 +1,5 @@
+# encoding: BINARY
+
 module EventMachine
   module WebSocket
     class Handler76 < Handler

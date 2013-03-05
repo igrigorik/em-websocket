@@ -1,3 +1,5 @@
+# encoding: BINARY
+
 require 'rubygems'
 require 'rspec'
 require 'em-spec/rspec'

@@ -1,3 +1,5 @@
+# encoding: BINARY
+
 require 'helper'
 
 describe EM::WebSocket::Framing03 do

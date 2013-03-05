@@ -1,3 +1,5 @@
+# encoding: BINARY
+
 require 'helper'
 require 'integration/shared_examples'
 
