@@ -54,7 +54,9 @@ Early protocols just close the TCP connection, draft 3 introduced a close handsh
 The `onclose` callback is passed a hash which may contain following keys (depending on the protocol version):
 
 * `was_clean`: boolean indicating whether the connection was closed via the close handshake.
-* `code`: the close code
+* `code`: the close code. There are two special close codes which the server may set (as defined in the WebSocket spec):
+  * 1005: no code was supplied
+  * 1006: abnormal closure (the same as `was_clean: false`)
 * `reason`: the close reason
 
 Acceptable close codes are defined in the WebSocket rfc (<http://tools.ietf.org/html/rfc6455#section-7.4>). The following codes can be supplies when calling `ws.close(code)`:
