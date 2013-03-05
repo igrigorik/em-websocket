@@ -140,4 +140,4 @@ Using flash emulation does require some minimal support from em-websocket which 
 
 # License
 
-The MIT License - Copyright (c) 2009 Ilya Grigorik
+The MIT License - Copyright (c) 2009-2013 Ilya Grigorik, Martyn Loughran
