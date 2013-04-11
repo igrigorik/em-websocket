@@ -276,5 +276,16 @@ describe EM::WebSocket::Framing07 do
       @f << "\x00\x02lo"
       @f << "\x80\x06 world"
     end
+
+    it "should raise if non-fin frame is followed by a non-continuation data frame (continuation frame would be expected)" do
+      lambda {
+        @f << 0b00000001 # Not fin, text
+        @f << 0b00000001 # Length 1
+        @f << 'f'
+        @f << 0b10000001 # fin, text (continutation expected)
+        @f << 0b00000001 # Length 1
+        @f << 'b'
+      }.should raise_error(EM::WebSocket::WebSocketError, 'Continuation frame expected')
+    end
   end
 end
