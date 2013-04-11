@@ -287,5 +287,12 @@ describe EM::WebSocket::Framing07 do
         @f << 'b'
       }.should raise_error(EM::WebSocket::WebSocketError, 'Continuation frame expected')
     end
+
+    it "should raise on non-fin control frames (control frames must not be fragmented)" do
+      lambda {
+        @f << 0b00001010 # Not fin, pong (opcode 10)
+        @f << 0b00000000 # Length 1
+      }.should raise_error(EM::WebSocket::WebSocketError, 'Control frames must not be fragmented')
+    end
   end
 end

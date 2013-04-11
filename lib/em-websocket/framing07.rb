@@ -97,6 +97,11 @@ module EventMachine
             end
           end
 
+          # Validate that control frames are not fragmented
+          if !fin && !data_frame?(frame_type)
+            raise WSProtocolError, 'Control frames must not be fragmented'
+          end
+
           if !fin
             debug [:moreframe, frame_type, application_data]
             @application_data_buffer << application_data
