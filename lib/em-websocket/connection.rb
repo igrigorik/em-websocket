@@ -10,11 +10,15 @@ module EventMachine
       def onclose(&blk);    @onclose = blk;   end
       def onerror(&blk);    @onerror = blk;   end
       def onmessage(&blk);  @onmessage = blk; end
+      def onbinary(&blk);   @onbinary = blk; end
       def onping(&blk);     @onping = blk;    end
       def onpong(&blk);     @onpong = blk;    end
 
       def trigger_on_message(msg)
         @onmessage.call(msg) if defined? @onmessage
+      end
+      def trigger_on_binary(msg)
+        @onbinary.call(msg) if defined? @onbinary
       end
       def trigger_on_open(handshake)
         @onopen.call(handshake) if defined? @onopen

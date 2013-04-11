@@ -114,7 +114,8 @@ describe "draft03" do
         data = "a" * 256
         
         start_server { |ws|
-          ws.onmessage { |msg|
+          ws.onbinary { |msg|
+            msg.encoding.should == Encoding.find("BINARY") if defined?(Encoding)
             msg.should == data
             done
           }
@@ -134,7 +135,8 @@ describe "draft03" do
         data = "a" * 65536
         
         start_server { |ws|
-          ws.onmessage { |msg|
+          ws.onbinary { |msg|
+            msg.encoding.should == Encoding.find("BINARY") if defined?(Encoding)
             msg.should == data
             done
           }

@@ -51,7 +51,7 @@ module EventMachine
           end
           @connection.trigger_on_message(application_data)
         when :binary
-          @connection.trigger_on_message(application_data)
+          @connection.trigger_on_binary(application_data)
         end
       end
 
