@@ -44,10 +44,20 @@ module EventMachine
       def receive_data(data)
         @data << data
         process_data
+      rescue WSProtocolError => e
+        fail_websocket(e)
       end
 
       def close_websocket(code, body)
         # Implemented in subclass
+      end
+
+      # This corresponds to "Fail the WebSocket Connection" in the spec.
+      def fail_websocket(e)
+        debug [:error, e]
+        close_websocket(e.code, e.message)
+        @connection.close_connection_after_writing
+        @connection.trigger_on_error(e)
       end
 
       def unbind

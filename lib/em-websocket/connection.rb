@@ -76,10 +76,6 @@ module EventMachine
         else
           dispatch(data)
         end
-      rescue WSProtocolError => e
-        debug [:error, e]
-        trigger_on_error(e)
-        close_websocket_private(e.code, e.message)
       rescue => e
         debug [:error, e]
 
