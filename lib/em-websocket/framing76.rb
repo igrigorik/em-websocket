@@ -7,7 +7,7 @@ module EventMachine
         @data = ''
       end
       
-      def process_data(newdata)
+      def process_data
         debug [:message, @data]
 
         # This algorithm comes straight from the spec
@@ -70,9 +70,6 @@ module EventMachine
             if @data.size > @connection.max_frame_size
               raise WSMessageTooBigError, "Frame length too long (#{@data.size} bytes)"
             end
-
-            # Optimization to avoid calling slice! unnecessarily
-            error = true and next unless newdata =~ /\xff/
 
             msg = @data.slice!(/\A\x00[^\xff]*\xff/)
             if msg

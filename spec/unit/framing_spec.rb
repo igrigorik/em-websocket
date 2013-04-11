@@ -15,7 +15,7 @@ describe EM::WebSocket::Framing03 do
 
     def <<(data)
       @data << data
-      process_data(data)
+      process_data
     end
     
     def debug(*args); end
@@ -140,7 +140,7 @@ describe EM::WebSocket::Framing04 do
 
     def <<(data)
       @data << data
-      process_data(data)
+      process_data
     end
 
     def debug(*args); end
@@ -209,7 +209,7 @@ describe EM::WebSocket::Framing07 do
 
     def <<(data)
       @data << data
-      process_data(data)
+      process_data
     end
 
     def debug(*args); end

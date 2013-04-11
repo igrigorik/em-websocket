@@ -10,7 +10,7 @@ module EventMachine
         @frame_type = nil
       end
       
-      def process_data(newdata)
+      def process_data
         error = false
 
         while !error && @data.size >= 2
