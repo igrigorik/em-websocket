@@ -83,7 +83,7 @@ module EventMachine
         end
         upgrade = @headers['upgrade']
         unless upgrade.kind_of?(String) && upgrade.downcase == 'websocket'
-          raise HandshakeError, "Invalid upgrade header: #{upgrade}"
+          raise HandshakeError, "Invalid upgrade header: #{upgrade.inspect}"
         end
 
         # Determine version heuristically
