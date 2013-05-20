@@ -265,13 +265,39 @@ module EventMachine
         end
       end
 
-      # Accept 1000, 3xxx or 4xxx
+      # Allow applications to close with 1000, 1003, 1008, 1011, 3xxx or 4xxx.
       #
-      # This is consistent with the spec and what browsers have implemented
-      # Frameworks should use 3xxx while applications should use 4xxx
+      # em-websocket uses a few other codes internally which should not be
+      # used by applications
+      #
+      # Browsers generally allow connections to be closed with code 1000,
+      # 3xxx, and 4xxx. em-websocket allows closing with a few other codes
+      # which seem reasonable (for discussion see
+      # https://github.com/igrigorik/em-websocket/issues/98)
+      #
+      # Usage from the rfc:
+      #
+      # 1000 indicates a normal closure
+      #
+      # 1003 indicates that an endpoint is terminating the connection
+      # because it has received a type of data it cannot accept
+      #
+      # 1008 indicates that an endpoint is terminating the connection because
+      # it has received a message that violates its policy
+      #
+      # 1011 indicates that a server is terminating the connection because it
+      # encountered an unexpected condition that prevented it from fulfilling
+      # the request
+      #
+      # Status codes in the range 3000-3999 are reserved for use by libraries,
+      # frameworks, and applications
+      #
+      # Status codes in the range 4000-4999 are reserved for private use and
+      # thus can't be registered
+      #
       def acceptable_close_code?(code)
         case code
-        when 1000, (3000..4999)
+        when 1000, 1003, 1008, 1011, (3000..4999)
           true
         else
           false
