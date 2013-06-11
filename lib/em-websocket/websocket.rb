@@ -11,6 +11,18 @@ module EventMachine
     # Used for errors that occur during WebSocket handshake
     class HandshakeError < WebSocketError; end
 
+    class HttpStatusForbidden < HandshakeError
+        def code; 403; end
+    end
+
+    class HttpErrorStatus < HandshakeError
+      attr_reader :code
+      def initialize(code, message=nil)
+        super(message)
+        @code = code
+      end
+    end
+
     # Used for errors which should cause the connection to close.
     # See RFC6455 §7.4.1 for a full description of meanings
     class WSProtocolError < WebSocketError

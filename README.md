@@ -4,6 +4,32 @@ EventMachine based, async, Ruby WebSocket server. Take a look at examples direct
 
 * [Ruby & Websockets: TCP for the Web](http://www.igvita.com/2009/12/22/ruby-websockets-tcp-for-the-browser/)
 
+## NOTES ON FORK
+
+This fork of the original code adds an onhandshake event, which can be used to
+return HTTP error codes (e.g., 403, 404, etc) before the HTTP response is
+upgraded to a websocket.
+
+See examples/onhandshake_auth.rb for a more-detailed example.
+
+```ruby
+require 'em-websocket'
+
+def authorized?
+    # implement something here
+    403
+end
+
+EM.run {
+  EM::WebSocket.run(:host => "0.0.0.0", :port => 8080) do |ws|
+    ws.onhandshake { |handshake|
+        403 unless authorized?
+    }
+    # rest of implementation
+  end
+}
+```
+
 ## Simple server example
 
 ```ruby

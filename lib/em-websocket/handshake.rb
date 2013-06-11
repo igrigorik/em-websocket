@@ -12,9 +12,10 @@ module EventMachine
       # Unfortunately drafts 75 & 76 require knowledge of whether the
       # connection is being terminated as ws/wss in order to generate the
       # correct handshake response
-      def initialize(secure)
+      def initialize(secure, onhandshake)
         @parser = Http::Parser.new
         @secure = secure
+        @onhandshake = onhandshake
 
         @parser.on_headers_complete = proc { |headers|
           @headers = Hash[headers.map { |k,v| [k.downcase, v] }]
@@ -84,6 +85,17 @@ module EventMachine
         upgrade = @headers['upgrade']
         unless upgrade.kind_of?(String) && upgrade.downcase == 'websocket'
           raise HandshakeError, "Invalid upgrade header: #{upgrade.inspect}"
+        end
+
+        if @onhandshake
+          handshake_ret = @onhandshake.call(self)
+          if handshake_ret == true || handshake_ret == 101
+            # Do nothing. Indicates success. proceed w/websocket upgrade response
+          elsif handshake_ret.is_a?(Fixnum) && (300...1000).include?(handshake_ret)
+            raise HttpErrorStatus.new(handshake_ret)
+          else
+            raise HandshakeError, "Invalid handshake response status/code: #{handshake_ret}"
+          end
         end
 
         # Determine version heuristically
