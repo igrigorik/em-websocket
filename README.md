@@ -17,7 +17,7 @@ require 'em-websocket'
 
 def authorized?
     # implement something here
-    403
+    false
 end
 
 EM.run {
