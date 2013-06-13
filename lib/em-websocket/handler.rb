@@ -58,7 +58,7 @@ module EventMachine
           :was_clean => false,
         }
 
-        @connection.trigger_on_close(@close_info )
+        @connection.trigger_on_close(@close_info)
       end
 
       def ping
