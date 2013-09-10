@@ -6,7 +6,7 @@ shared_examples_for "a websocket server" do
   it "should expose the protocol version" do
     em {
       start_server { |ws|
-        ws.onopen { |handshake|
+        ws.onopen { |handshake, connection|
           handshake.protocol_version.should == version
           done
         }
@@ -19,7 +19,7 @@ shared_examples_for "a websocket server" do
   it "should expose the origin header" do
     em {
       start_server { |ws|
-        ws.onopen { |handshake|
+        ws.onopen { |handshake, connection|
           handshake.origin.should == 'http://example.com'
           done
         }
