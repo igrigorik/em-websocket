@@ -11,8 +11,8 @@ require 'em-websocket'
 
 EM.run {
   EM::WebSocket.run(:host => "0.0.0.0", :port => 8080) do |ws|
-    ws.onopen { |handshake|
-      puts "WebSocket connection open"
+    ws.onopen { |handshake, connection|
+      puts "WebSocket connection open from #{connection.remote_addr}"
 
       # Access properties on the EM::WebSocket::Handshake object, e.g.
       # path, query_string, origin, headers

@@ -17,7 +17,7 @@ module EventMachine
         @onmessage.call(msg) if defined? @onmessage
       end
       def trigger_on_open(handshake)
-        @onopen.call(handshake) if defined? @onopen
+        @onopen.call(handshake, self) if defined? @onopen
       end
       def trigger_on_close(event = {})
         @onclose.call(event) if defined? @onclose
@@ -95,6 +95,10 @@ module EventMachine
         debug [:error, e]
         # These are application errors - raise unless onerror defined
         trigger_on_error(e) || raise(e)
+      end
+
+      def remote_addr
+        get_peername[2,6].unpack('nC4')[1..4].join('.')
       end
 
       def dispatch(data)

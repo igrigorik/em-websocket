@@ -37,7 +37,7 @@ describe "WebSocket server" do
       end
 
       start_server do |ws|
-        ws.onopen { |handshake|
+        ws.onopen { |handshake, connection|
           headers = handshake.headers
           headers["User-Agent"].should == "EventMachine HttpClient"
           headers["Connection"].should == "Upgrade"
@@ -71,11 +71,12 @@ describe "WebSocket server" do
       end
 
       start_server do |ws|
-        ws.onopen { |handshake|
+        ws.onopen { |handshake, connection|
           handshake.path.should == '/hello'
           handshake.query_string.split('&').sort.
             should == ["baz=qux", "foo=bar"]
           handshake.query.should == {"foo"=>"bar", "baz"=>"qux"}
+          connection.remote_addr.should match /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/
         }
         ws.onclose {
           ws.state.should == :closed
@@ -114,7 +115,7 @@ describe "WebSocket server" do
       end
 
       start_server do |ws|
-        ws.onopen { |handshake|
+        ws.onopen { |handshake, connection|
           handshake.headers["User-Agent"].should == "EventMachine HttpClient"
         }
         ws.onclose {
