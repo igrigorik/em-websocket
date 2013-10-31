@@ -27,25 +27,22 @@ describe "WebSocket server" do
   it "should expose the WebSocket request headers, path and query params" do
     em {
       EM.add_timer(0.1) do
-        http = EM::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
-        http.errback { fail }
-        http.callback {
-          http.response_header.status.should == 101
-          http.close_connection
-        }
-        http.stream { |msg| }
+        ws = EventMachine::WebSocketClient.connect('ws://127.0.0.1:12345/',
+                                                   :origin => 'http://example.com')
+        ws.errback { fail }
+        ws.callback { ws.close_connection }
+        ws.stream { |msg| }
       end
 
       start_server do |ws|
         ws.onopen { |handshake|
           headers = handshake.headers
-          headers["User-Agent"].should == "EventMachine HttpClient"
           headers["Connection"].should == "Upgrade"
-          headers["Upgrade"].should == "WebSocket"
+          headers["Upgrade"].should == "websocket"
           headers["Host"].to_s.should == "127.0.0.1:12345"
           handshake.path.should == "/"
           handshake.query.should == {}
-          handshake.origin.should == "127.0.0.1"
+          handshake.origin.should == 'http://example.com'
         }
         ws.onclose {
           ws.state.should == :closed
@@ -58,16 +55,12 @@ describe "WebSocket server" do
   it "should expose the WebSocket path and query params when nonempty" do
     em {
       EM.add_timer(0.1) do
-        http = EM::HttpRequest.new('ws://127.0.0.1:12345/hello').get({
-          :query => {'foo' => 'bar', 'baz' => 'qux'},
-          :timeout => 0
-        })
-        http.errback { fail }
-        http.callback {
-          http.response_header.status.should == 101
-          http.close_connection
+        ws = EventMachine::WebSocketClient.connect('ws://127.0.0.1:12345/hello?foo=bar&baz=qux')
+        ws.errback { fail }
+        ws.callback {
+          ws.close_connection
         }
-        http.stream { |msg| }
+        ws.stream { |msg| }
       end
 
       start_server do |ws|
@@ -104,18 +97,15 @@ describe "WebSocket server" do
   it "should allow the server to be started inside an existing EM" do
     em {
       EM.add_timer(0.1) do
-        http = EM::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
-        http.errback { fail }
-        http.callback {
-          http.response_header.status.should == 101
-          http.close_connection
-        }
-        http.stream { |msg| }
+        http = EM::HttpRequest.new('http://127.0.0.1:12345/').get :timeout => 0
+        http.errback { |e| done }
+        http.callback { fail }
       end
 
       start_server do |ws|
         ws.onopen { |handshake|
-          handshake.headers["User-Agent"].should == "EventMachine HttpClient"
+          headers = handshake.headers
+          headers["Host"].to_s.should == "127.0.0.1:12345"
         }
         ws.onclose {
           ws.state.should == :closed

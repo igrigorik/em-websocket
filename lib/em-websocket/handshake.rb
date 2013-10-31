@@ -48,12 +48,12 @@ module EventMachine
       # Returns the request path (excluding any query params)
       #
       def path
-        @parser.request_path
+        URI.parse(@parser.request_url).path
       end
 
       # Returns the query params as a string foo=bar&baz=...
       def query_string
-        @parser.query_string
+        URI.parse(@parser.request_url).query.to_s
       end
 
       def query

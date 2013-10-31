@@ -155,7 +155,7 @@ describe EM::WebSocket::Handshake do
     handshake.receive_data("\r\n\r\nfoobar")
     
     handshake.
-      should fail_with_error(EM::WebSocket::HandshakeError, 'Invalid HTTP header: Could not parse data entirely')
+      should fail_with_error(EM::WebSocket::HandshakeError, 'Invalid HTTP header: Could not parse data entirely (4 != 10)')
   end
 
   # This might seems crazy, but very occasionally we saw multiple "Upgrade:
