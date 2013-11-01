@@ -6,6 +6,7 @@ require 'em-spec/rspec'
 require 'em-http'
 
 require 'em-websocket'
+require 'em-websocket-client'
 
 RSpec.configure do |c|
   c.mock_with :rspec
@@ -101,7 +102,7 @@ class Draft07FakeWebSocketClient < Draft05FakeWebSocketClient
   end
 end
 
-# Wrap EM:HttpRequest in a websocket like interface so that it can be used in the specs with the same interface as FakeWebSocketClient
+# Wrapper around em-websocket-client
 class Draft75WebSocketClient
   def onopen(&blk);     @onopen = blk;    end
   def onclose(&blk);    @onclose = blk;   end
@@ -109,18 +110,17 @@ class Draft75WebSocketClient
   def onmessage(&blk);  @onmessage = blk; end
 
   def initialize
-    @ws = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get({
-      :timeout => 0,
-      :origin => 'http://example.com',
-    })
-    @ws.errback { @onerror.call if defined? @onerror }
+    @ws = EventMachine::WebSocketClient.connect('ws://127.0.0.1:12345/',
+                                                :version => 75,
+                                                :origin => 'http://example.com')
+    @ws.errback { |err| @onerror.call if defined? @onerror }
     @ws.callback { @onopen.call if defined? @onopen }
     @ws.stream { |msg| @onmessage.call(msg) if defined? @onmessage }
     @ws.disconnect { @onclose.call if defined? @onclose }
   end
 
   def send(message)
-    @ws.send(message)
+    @ws.send_msg(message)
   end
 
   def close_connection

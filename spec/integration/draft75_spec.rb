@@ -29,12 +29,12 @@ describe "WebSocket server draft75" do
     em {
       MSG = "Hello World!"
       EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
-        http.errback { fail }
-        http.callback { http.response_header.status.should == 101 }
+        ws = EventMachine::WebSocketClient.connect('ws://127.0.0.1:12345/')
+        ws.errback { fail }
+        ws.callback { }
 
-        http.stream { |msg|
-          msg.should == MSG
+        ws.stream { |msg|
+          msg.data.should == MSG
           EventMachine.stop
         }
       end
@@ -53,13 +53,12 @@ describe "WebSocket server draft75" do
       received = []
 
       EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
-        http.errback { fail }
-        http.stream {|msg|}
-        http.callback {
-          http.response_header.status.should == 101
-          http.send messages[0]
-          http.send messages[1]
+        ws = EventMachine::WebSocketClient.connect('ws://127.0.0.1:12345/')
+        ws.errback { fail }
+        ws.stream {|msg|}
+        ws.callback {
+          ws.send_msg messages[0]
+          ws.send_msg messages[1]
         }
       end
 
@@ -79,13 +78,12 @@ describe "WebSocket server draft75" do
   it "should call onclose callback when client closes connection" do
     em {
       EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('ws://127.0.0.1:12345/').get :timeout => 0
-        http.errback { fail }
-        http.callback {
-          http.response_header.status.should == 101
-          http.close_connection
+        ws = EventMachine::WebSocketClient.connect('ws://127.0.0.1:12345/')
+        ws.errback { fail }
+        ws.callback {
+          ws.close_connection
         }
-        http.stream{|msg|}
+        ws.stream{|msg|}
       end
 
       start_server { |ws|
@@ -101,8 +99,8 @@ describe "WebSocket server draft75" do
   it "should call onerror callback with raised exception and close connection on bad handshake" do
     em {
       EventMachine.add_timer(0.1) do
-        http = EventMachine::HttpRequest.new('http://127.0.0.1:12345/').get :timeout => 0
-        http.errback { http.response_header.status.should == 0 }
+        http = EM::HttpRequest.new('http://127.0.0.1:12345/').get
+        http.errback { }
         http.callback { fail }
       end
 
