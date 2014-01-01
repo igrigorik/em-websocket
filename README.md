@@ -1,8 +1,9 @@
 # EM-WebSocket
 
-EventMachine based, async, Ruby WebSocket server. Take a look at examples directory, or check out the blog post below:
+[![Gem Version](https://badge.fury.io/rb/em-websocket.png)](http://rubygems.org/gems/em-websocket)
+[![Analytics](https://ga-beacon.appspot.com/UA-71196-10/em-websocket/readme)](https://github.com/igrigorik/ga-beacon)
 
-* [Ruby & Websockets: TCP for the Web](http://www.igvita.com/2009/12/22/ruby-websockets-tcp-for-the-browser/)
+EventMachine based, async, Ruby WebSocket server. Take a look at examples directory, or check out the blog post: [Ruby & Websockets: TCP for the Web](http://www.igvita.com/2009/12/22/ruby-websockets-tcp-for-the-browser/).
 
 ## Simple server example
 
