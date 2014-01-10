@@ -48,12 +48,12 @@ module EventMachine
       # Returns the request path (excluding any query params)
       #
       def path
-        URI.parse(@parser.request_url).path
+        @path
       end
 
       # Returns the query params as a string foo=bar&baz=...
       def query_string
-        URI.parse(@parser.request_url).query.to_s
+        @query_string
       end
 
       def query
@@ -75,6 +75,20 @@ module EventMachine
       def process(headers, remains)
         unless @parser.http_method == "GET"
           raise HandshakeError, "Must be GET request"
+        end
+
+        # Validate request path
+        #
+        # According to http://tools.ietf.org/search/rfc2616#section-5.1.2, an
+        # invalid Request-URI should result in a 400 status code, but
+        # HandshakeError's currently result in a WebSocket abort. It's not
+        # clear which should take precedence, but an abort will do just fine.
+        begin
+          uri = URI.parse(@parser.request_url)
+          @path = uri.path
+          @query_string = uri.query || ""
+        rescue URI::InvalidURIError
+          raise HandshakeError, "Invalid request URI: #{@parser.request_url}"
         end
 
         # Validate Upgrade

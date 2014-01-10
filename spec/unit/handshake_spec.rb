@@ -207,4 +207,10 @@ describe EM::WebSocket::Handshake do
     
     handshake(@request).should succeed_with_upgrade(@response)
   end
+
+  it "should fail if the request URI is invalid" do
+    @request[:path] = "/%"
+    handshake(@request).should \
+      fail_with_error(EM::WebSocket::HandshakeError, 'Invalid request URI: /%')
+  end
 end
