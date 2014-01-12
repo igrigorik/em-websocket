@@ -113,7 +113,7 @@ end
 
 There are two kinds of errors that need to be handled -- WebSocket protocol errors and errors in application code.
 
-WebSocket protocol errors (for example invalid data in the handshake or invalid message frames) raise errors which descend from `EM::WebSocket::WebSocketError`. Such errors are rescued internally and the WebSocket connection will be closed immediately or an error code sent to the browser in accordance to the WebSocket specification. It is possible to be notified in application code of such errors by including an `onerror` callback.
+WebSocket protocol errors (for example invalid data in the handshake or invalid message frames) raise errors which descend from `EM::WebSocket::WebSocketError`. Such errors are rescued internally and the WebSocket connection will be closed immediately or an error code sent to the browser in accordance to the WebSocket specification. The `onclose` callback is not invoked when a connection is closed as a result of this type of error. It is possible to be notified in application code of such errors by including an `onerror` callback.
 
 ```ruby
 ws.onerror { |error|
