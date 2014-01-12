@@ -126,6 +126,23 @@ describe EM::WebSocket::Handshake do
     end
   end
   
+  it "should raise error if Sec-WebSocket-Key1 is missing" do
+    @request[:headers].delete("Sec-WebSocket-Key1")
+
+    # The error message isn't correct since key1 is used to heuristically
+    # determine the protocol version in use, however this test at least checks
+    # that the handshake does correctly fail
+    handshake(@request).
+      should fail_with_error(EM::WebSocket::HandshakeError, 'Extra bytes after header')
+  end
+
+  it "should raise error if Sec-WebSocket-Key2 is missing" do
+    @request[:headers].delete("Sec-WebSocket-Key2")
+
+    handshake(@request).
+      should fail_with_error(EM::WebSocket::HandshakeError, 'WebSocket key1 or key2 is missing')
+  end
+
   it "should raise error if spaces do not divide numbers in Sec-WebSocket-Key* " do
     @request[:headers]['Sec-WebSocket-Key2'] = '12998 5 Y3 1.P00'
 
@@ -138,7 +155,7 @@ describe EM::WebSocket::Handshake do
     handshake.receive_data("\r\n\r\nfoobar")
     
     handshake.
-      should fail_with_error(EM::WebSocket::HandshakeError, 'Invalid HTTP header: Could not parse data entirely')
+      should fail_with_error(EM::WebSocket::HandshakeError, 'Invalid HTTP header: Could not parse data entirely (4 != 10)')
   end
 
   # This might seems crazy, but very occasionally we saw multiple "Upgrade:
@@ -189,5 +206,11 @@ describe EM::WebSocket::Handshake do
     handshake.receive_data(rest)
     
     handshake(@request).should succeed_with_upgrade(@response)
+  end
+
+  it "should fail if the request URI is invalid" do
+    @request[:path] = "/%"
+    handshake(@request).should \
+      fail_with_error(EM::WebSocket::HandshakeError, 'Invalid request URI: /%')
   end
 end

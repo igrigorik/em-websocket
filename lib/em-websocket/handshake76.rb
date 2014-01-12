@@ -39,6 +39,10 @@ module EventMachine::WebSocket
       end
 
       def numbers_over_spaces(string)
+        unless string
+          raise HandshakeError, "WebSocket key1 or key2 is missing"
+        end
+
         numbers = string.scan(/[0-9]/).join.to_i
 
         spaces = string.scan(/ /).size
