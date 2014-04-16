@@ -70,6 +70,14 @@ module EventMachine
         @secure
       end
 
+      def match(path, &block)
+        regex = Regexp.new '^' + path.chomp('/').gsub(/\/(:[^\/|$]+)/, '__REGEX__').gsub('/', '\/').gsub(/__REGEX__/, '\/([^\/|$]+)') + '$'
+        if matches = @path.chomp('/').match(regex)
+          yield *matches[1..matches.size]
+        end
+      end
+
+
       private
 
       def process(headers, remains)

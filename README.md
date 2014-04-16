@@ -18,6 +18,11 @@ EM.run {
       # Access properties on the EM::WebSocket::Handshake object, e.g.
       # path, query_string, origin, headers
 
+      handshake.match '/messages/:year/:month/:day' do |year, month, day|
+        message = Message.where(year: year, month: month, day: day).first
+        ws.send message.body
+      end
+
       # Publish message to the client
       ws.send "Hello Client, you connected to #{handshake.path}"
     }
