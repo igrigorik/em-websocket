@@ -5,6 +5,7 @@ module EventMachine
         # TODO: Ideally send body data and check that it matches in ack
         send_frame(:close, "\x53")
         @state = :closing
+        start_close_timeout
       end
 
       def supports_close_codes?; false; end

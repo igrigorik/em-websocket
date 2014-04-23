@@ -38,6 +38,7 @@ module EventMachine
         @connection = connection
         @debug = debug
         @state = :connected
+        @close_timer = nil
         initialize_framing
       end
 
@@ -52,6 +53,15 @@ module EventMachine
         # Implemented in subclass
       end
 
+      # Used to avoid un-acked and unclosed remaining open indefinitely
+      def start_close_timeout
+        @close_timer = EM::Timer.new(@connection.close_timeout) {
+          @connection.close_connection
+          e = WSProtocolError.new("Close handshake un-acked after #{@connection.close_timeout}s, closing tcp connection")
+          @connection.trigger_on_error(e)
+        }
+      end
+
       # This corresponds to "Fail the WebSocket Connection" in the spec.
       def fail_websocket(e)
         debug [:error, e]
@@ -62,6 +72,8 @@ module EventMachine
 
       def unbind
         @state = :closed
+
+        @close_timer.cancel if @close_timer
 
         @close_info = defined?(@close_info) ? @close_info : {
           :code => 1006,

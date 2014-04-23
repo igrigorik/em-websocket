@@ -44,6 +44,7 @@ module EventMachine
         @secure = options[:secure] || false
         @secure_proxy = options[:secure_proxy] || false
         @tls_options = options[:tls_options] || {}
+        @close_timeout = options[:close_timeout]
 
         @handler = nil
 
@@ -245,6 +246,10 @@ module EventMachine
       #
       def max_frame_size
         defined?(@max_frame_size) ? @max_frame_size : WebSocket.max_frame_size
+      end
+
+      def close_timeout
+        @close_timeout || WebSocket.close_timeout
       end
 
       private

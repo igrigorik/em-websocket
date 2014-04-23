@@ -2,8 +2,11 @@ module EventMachine
   module WebSocket
     class << self
       attr_accessor :max_frame_size
+      attr_accessor :close_timeout
     end
     @max_frame_size = 10 * 1024 * 1024 # 10MB
+    # Connections are given 60s to close after being sent a close handshake
+    @close_timeout = 60
 
     # All errors raised by em-websocket should descend from this class
     class WebSocketError < RuntimeError; end

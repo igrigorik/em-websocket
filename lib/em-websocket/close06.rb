@@ -10,6 +10,7 @@ module EventMachine
           send_frame(:close, '')
         end
         @state = :closing
+        start_close_timeout
       end
 
       def supports_close_codes?; true; end
