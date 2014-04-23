@@ -1,7 +1,6 @@
 # encoding: BINARY
 
 require 'helper'
-require 'integration/shared_examples'
 
 describe "WebSocket server draft76" do
   include EM::SpecHelper
@@ -33,12 +32,6 @@ describe "WebSocket server draft76" do
         "Sec-WebSocket-Protocol" => "sample"
       },
       :body => "8jKS\'y:G*Co,Wxa-"
-    }
-  end
-  
-  def start_server
-    EM::WebSocket.run(:host => "0.0.0.0", :port => 12345) { |ws|
-      yield ws if block_given?
     }
   end
 

@@ -8,6 +8,9 @@ require 'em-http'
 require 'em-websocket'
 require 'em-websocket-client'
 
+require 'integration/shared_examples'
+require 'integration/gte_03_examples'
+
 RSpec.configure do |c|
   c.mock_with :rspec
 end
@@ -126,6 +129,12 @@ class Draft75WebSocketClient
   def close_connection
     @ws.close_connection
   end
+end
+
+def start_server(opts = {})
+  EM::WebSocket.run({:host => "0.0.0.0", :port => 12345}.merge(opts)) { |ws|
+    yield ws if block_given?
+  }
 end
 
 def format_request(r)

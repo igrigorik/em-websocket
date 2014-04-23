@@ -6,12 +6,6 @@ describe "WebSocket server" do
   include EM::SpecHelper
   default_timeout 1
 
-  def start_server
-    EM::WebSocket.run(:host => "0.0.0.0", :port => 12345) { |ws|
-      yield ws if block_given?
-    }
-  end
-
   it "should fail on non WebSocket requests" do
     em {
       EM.add_timer(0.1) do

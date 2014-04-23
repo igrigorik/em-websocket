@@ -1,5 +1,4 @@
 require 'helper'
-require 'integration/shared_examples'
 
 describe "draft03" do
   include EM::SpecHelper
@@ -35,12 +34,6 @@ describe "draft03" do
     }
   end
 
-  def start_server
-    EM::WebSocket.run(:host => "0.0.0.0", :port => 12345) { |ws|
-      yield ws if block_given?
-    }
-  end
-
   def start_client
     client = EM.connect('0.0.0.0', 12345, Draft03FakeWebSocketClient)
     client.send_data(format_request(@request))
@@ -49,6 +42,10 @@ describe "draft03" do
   end
 
   it_behaves_like "a websocket server" do
+    let(:version) { 3 }
+  end
+
+  it_behaves_like "a WebSocket server drafts 3 and above" do
     let(:version) { 3 }
   end
 

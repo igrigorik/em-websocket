@@ -1,5 +1,4 @@
 require 'helper'
-require 'integration/shared_examples'
 
 # These integration tests are older and use a different testing style to the 
 # integration tests for newer drafts. They use EM::HttpRequest which happens 
@@ -8,12 +7,6 @@ require 'integration/shared_examples'
 describe "WebSocket server draft75" do
   include EM::SpecHelper
   default_timeout 1
-
-  def start_server
-    EM::WebSocket.run(:host => "0.0.0.0", :port => 12345) { |ws|
-      yield ws if block_given?
-    }
-  end
 
   def start_client
     client = Draft75WebSocketClient.new
