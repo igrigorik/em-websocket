@@ -26,6 +26,7 @@ describe "draft06" do
         "Upgrade" => "websocket",
         "Connection" => "Upgrade",
         "Sec-WebSocket-Accept" => "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=",
+        "Sec-WebSocket-Protocol" => "sample",
       }
     }
   end

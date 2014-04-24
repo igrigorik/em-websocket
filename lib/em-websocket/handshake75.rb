@@ -9,9 +9,19 @@ module EventMachine
         upgrade << "Upgrade: WebSocket\r\n"
         upgrade << "Connection: Upgrade\r\n"
         upgrade << "WebSocket-Origin: #{headers['origin']}\r\n"
-        upgrade << "WebSocket-Location: #{location}\r\n\r\n"
+        upgrade << "WebSocket-Location: #{location}\r\n"
+        if protocol = headers['sec-websocket-protocol']
+          validate_protocol!(protocol)
+          upgrade << "Sec-WebSocket-Protocol: #{protocol}\r\n"
+        end
+        upgrade << "\r\n"
 
         return upgrade
+      end
+
+      def self.validate_protocol!(protocol)
+        raise HandshakeError, "Invalid WebSocket-Protocol: empty" if protocol.empty?
+        # TODO: Validate characters
       end
     end
   end
