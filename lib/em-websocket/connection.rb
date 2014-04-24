@@ -236,6 +236,11 @@ module EventMachine
         @handler ? @handler.state : :handshake
       end
 
+      # Returns the IP address for the remote peer
+      def remote_ip
+        get_peername[2,6].unpack('nC4')[1..4].join('.')
+      end
+
       # Returns the maximum frame size which this connection is configured to
       # accept. This can be set globally or on a per connection basis, and
       # defaults to a value of 10MB if not set.
