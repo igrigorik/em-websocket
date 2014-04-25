@@ -118,7 +118,7 @@ module EventMachine
               debug [:error, e]
               trigger_on_error(e)
               # Handshake errors require the connection to be aborted
-              abort
+              abort(:handshake_error)
             }
 
             handshake
@@ -261,7 +261,8 @@ module EventMachine
 
       # As definited in draft 06 7.2.2, some failures require that the server
       # abort the websocket connection rather than close cleanly
-      def abort
+      def abort(reason)
+        debug [:abort, reason]
         close_connection
       end
 
@@ -271,7 +272,7 @@ module EventMachine
           @handler.close_websocket(code, body)
         else
           # The handshake hasn't completed - should be safe to terminate
-          abort
+          abort(:handshake_incomplete)
         end
       end
 
