@@ -45,6 +45,7 @@ module EventMachine
         @secure_proxy = options[:secure_proxy] || false
         @tls_options = options[:tls_options] || {}
         @close_timeout = options[:close_timeout]
+        @outbound_limit = options[:outbound_limit] || 0
 
         @handler = nil
 
@@ -86,6 +87,16 @@ module EventMachine
 
         # These are application errors - raise unless onerror defined
         trigger_on_error(e) || raise(e)
+      end
+
+      def send_data(data)
+        if @outbound_limit > 0 &&
+            get_outbound_data_size + data.bytesize > @outbound_limit
+          abort(:outbound_limit_reached)
+          return 0
+        end
+
+        super(data)
       end
 
       def unbind
