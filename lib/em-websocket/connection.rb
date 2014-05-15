@@ -1,3 +1,7 @@
+# Use Rack::Utils for HTTP error status codes. We could also just implement
+# a subset of that functionality here to remove the dependency
+require 'rack'
+
 module EventMachine
   module WebSocket
     class Connection < EventMachine::Connection
@@ -6,6 +10,7 @@ module EventMachine
       attr_writer :max_frame_size
 
       # define WebSocket callbacks
+      def onhandshake(&blk); @onhandshake = blk; end
       def onopen(&blk);     @onopen = blk;    end
       def onclose(&blk);    @onclose = blk;   end
       def onerror(&blk);    @onerror = blk;   end
@@ -103,7 +108,7 @@ module EventMachine
           send_flash_cross_domain_file
         else
           @handshake ||= begin
-            handshake = Handshake.new(@secure || @secure_proxy)
+            handshake = Handshake.new(@secure || @secure_proxy, @onhandshake)
 
             handshake.callback { |upgrade_response, handler_klass|
               debug [:accepting_ws_version, handshake.protocol_version]
@@ -117,7 +122,20 @@ module EventMachine
             handshake.errback { |e|
               debug [:error, e]
               trigger_on_error(e)
-              # Handshake errors require the connection to be aborted
+              @handshake = nil
+              if e.respond_to?(:code)
+                http_status_code = e.code
+                message = Rack::Utils::HTTP_STATUS_CODES[http_status_code]
+                #body = message+"\n"
+                payload = sprintf("HTTP/1.1 %d %s\r\n", http_status_code, message) +
+                  "Content-Type: text/plain\r\n\r\n" + message
+                self.send_data(payload)
+                # TODO: handle 30x redirects and 401. We do not need to do anything special
+                # for 403, 404. Do we need any special processing for other 40x codes?
+                # get HTTP status messages for codes. The only error code that we would
+                # use would probably be 403 (?) Maybe 404.
+                # Uncategorized handshake errors require the connection to be aborted
+              end
               abort
             }
 
