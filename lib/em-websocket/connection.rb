@@ -45,6 +45,7 @@ module EventMachine
         @secure_proxy = options[:secure_proxy] || false
         @tls_options = options[:tls_options] || {}
         @close_timeout = options[:close_timeout]
+        @outbound_limit = options[:outbound_limit] || 0
 
         @handler = nil
 
@@ -88,6 +89,16 @@ module EventMachine
         trigger_on_error(e) || raise(e)
       end
 
+      def send_data(data)
+        if @outbound_limit > 0 &&
+            get_outbound_data_size + data.bytesize > @outbound_limit
+          abort(:outbound_limit_reached)
+          return 0
+        end
+
+        super(data)
+      end
+
       def unbind
         debug [:unbind, :connection]
 
@@ -118,7 +129,7 @@ module EventMachine
               debug [:error, e]
               trigger_on_error(e)
               # Handshake errors require the connection to be aborted
-              abort
+              abort(:handshake_error)
             }
 
             handshake
@@ -261,7 +272,8 @@ module EventMachine
 
       # As definited in draft 06 7.2.2, some failures require that the server
       # abort the websocket connection rather than close cleanly
-      def abort
+      def abort(reason)
+        debug [:abort, reason]
         close_connection
       end
 
@@ -271,7 +283,7 @@ module EventMachine
           @handler.close_websocket(code, body)
         else
           # The handshake hasn't completed - should be safe to terminate
-          abort
+          abort(:handshake_incomplete)
         end
       end
 
