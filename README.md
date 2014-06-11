@@ -140,7 +140,3 @@ Using flash emulation does require some minimal support from em-websocket which 
 * [Twitter AMQP WebSocket Example](http://github.com/rubenfonseca/twitter-amqp-websocket-example)
 * examples/multicast.rb - broadcast all ruby tweets to all subscribers
 * examples/echo.rb - server <> client exchange via a websocket
-
-# License
-
-The MIT License - Copyright (c) 2009-2013 Ilya Grigorik, Martyn Loughran
