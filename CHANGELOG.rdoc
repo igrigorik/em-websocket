@@ -1,5 +1,9 @@
 = Changelog
 
+== 0.5.2 / 2016-02-11
+- new features:
+  - Support for custom handler
+
 == 0.5.1 / 2014-04-23
 
 - new features:

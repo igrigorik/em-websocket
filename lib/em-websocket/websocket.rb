@@ -42,8 +42,10 @@ module EventMachine
 
     # Start WebSocket server inside eventmachine run loop
     def self.run(options)
-      host, port = options.values_at(:host, :port)
-      EM.start_server(host, port, Connection, options) do |c|
+      host, port, connection = options.values_at(:host, :port, :handler)
+      connection ||= Connection
+
+      EM.start_server(host, port, connection, options) do |c|
         yield c
       end
     end
