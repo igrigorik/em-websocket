@@ -110,7 +110,9 @@ module EventMachine
       end
 
       def dispatch(data)
-        if data.match(/\A<policy-file-request\s*\/>/)
+        if data.match(%r|^GET /healthcheck|)
+          send_healthcheck_response
+        elsif data.match(/\A<policy-file-request\s*\/>/)
           send_flash_cross_domain_file
         else
           @handshake ||= begin
@@ -137,6 +139,23 @@ module EventMachine
 
           @handshake.receive_data(data)
         end
+      end
+
+      def send_healthcheck_response
+        debug [:healthcheck, 'OK']
+
+        healthcheck_res = ["HTTP/1.1 200 OK"]
+        healthcheck_res << "Content-Type: text/plain"
+        healthcheck_res << "Content-Length: 2"
+
+        healthcheck_res = healthcheck_res.join("\r\n") + "\r\n\r\nOK"
+
+        send_data healthcheck_res
+
+        # handle the healthcheck request transparently
+        # no need to notify the user about this connection
+        @onclose = nil
+        close_connection_after_writing
       end
 
       def send_flash_cross_domain_file
