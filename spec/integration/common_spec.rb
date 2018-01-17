@@ -117,7 +117,7 @@ describe "WebSocket server" do
           ws.onmessage{|msg| ws.send(msg + "x") }
           ws.onclose{|status|
             status[:code].should == 1006 # Unclean
-            status[:was_clean].should be_false
+            status[:was_clean].should be false
           }
         end
 
