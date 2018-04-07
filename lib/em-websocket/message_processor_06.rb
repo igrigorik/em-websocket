@@ -37,8 +37,22 @@ module EventMachine
             @connection.close_connection_after_writing
           end
         when :ping
-          # Pong back the same data
-          send_frame(:pong, application_data)
+          # There are a couple of protections here against malicious/broken WebSocket abusing ping frames.
+          #
+          # 1. Delay 200ms before replying. This reduces the number of pings from WebSocket clients behaving as
+          #    `for (;;) { send_ping(conn); rcv_pong(conn); }`. The spec says we "SHOULD respond with Pong frame as soon
+          #    as is practical".
+          # 2. Reply at most every 200ms. This reduces the number of pong frames sent to WebSocket clients behaving as
+          #    `for (;;) { send_ping(conn); }`. The spec says "If an endpoint receives a Ping frame and has not yet sent
+          #    Pong frame(s) in response to previous Ping frame(s), the endpoint MAY elect to send a Pong frame for only
+          #    the most recently processed Ping frame."
+          @most_recent_pong_application_data = application_data
+          if @pong_timer == nil then
+            @pong_timer = EventMachine.add_timer(0.2) do
+              @pong_timer = nil
+              send_frame(:pong, @most_recent_pong_application_data)
+            end
+          end
           @connection.trigger_on_ping(application_data)
         when :pong
           @connection.trigger_on_pong(application_data)
