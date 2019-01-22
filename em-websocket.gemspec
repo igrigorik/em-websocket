@@ -11,6 +11,7 @@ Gem::Specification.new do |s|
   s.homepage    = "http://github.com/igrigorik/em-websocket"
   s.summary     = %q{EventMachine based WebSocket server}
   s.description = %q{EventMachine based WebSocket server}
+  s.license     = 'MIT'
 
   s.rubyforge_project = "em-websocket"
 

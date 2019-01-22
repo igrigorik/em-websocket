@@ -46,6 +46,7 @@ module EventMachine
         @secure_proxy = options[:secure_proxy] || false
         @tls_options = options[:tls_options] || {}
         @close_timeout = options[:close_timeout]
+        @outbound_limit = options[:outbound_limit] || 0
 
         @handler = nil
 
@@ -89,6 +90,16 @@ module EventMachine
         trigger_on_error(e) || raise(e)
       end
 
+      def send_data(data)
+        if @outbound_limit > 0 &&
+            get_outbound_data_size + data.bytesize > @outbound_limit
+          abort(:outbound_limit_reached)
+          return 0
+        end
+
+        super(data)
+      end
+
       def unbind
         debug [:unbind, :connection]
 
@@ -100,7 +111,9 @@ module EventMachine
       end
 
       def dispatch(data)
-        if data.match(/\A<policy-file-request\s*\/>/)
+        if data.match(%r|^GET /healthcheck|)
+          send_healthcheck_response
+        elsif data.match(/\A<policy-file-request\s*\/>/)
           send_flash_cross_domain_file
         else
           @handshake ||= begin
@@ -119,7 +132,7 @@ module EventMachine
               debug [:error, e]
               trigger_on_error(e)
               # Handshake errors require the connection to be aborted
-              abort
+              abort(:handshake_error)
             }
 
             handshake
@@ -127,6 +140,23 @@ module EventMachine
 
           @handshake.receive_data(data)
         end
+      end
+
+      def send_healthcheck_response
+        debug [:healthcheck, 'OK']
+
+        healthcheck_res = ["HTTP/1.1 200 OK"]
+        healthcheck_res << "Content-Type: text/plain"
+        healthcheck_res << "Content-Length: 2"
+
+        healthcheck_res = healthcheck_res.join("\r\n") + "\r\n\r\nOK"
+
+        send_data healthcheck_res
+
+        # handle the healthcheck request transparently
+        # no need to notify the user about this connection
+        @onclose = nil
+        close_connection_after_writing
       end
 
       def send_flash_cross_domain_file
@@ -237,6 +267,11 @@ module EventMachine
         @handler ? @handler.state : :handshake
       end
 
+      # Returns the IP address for the remote peer
+      def remote_ip
+        get_peername[2,6].unpack('nC4')[1..4].join('.')
+      end
+
       # Returns the maximum frame size which this connection is configured to
       # accept. This can be set globally or on a per connection basis, and
       # defaults to a value of 10MB if not set.
@@ -257,7 +292,8 @@ module EventMachine
 
       # As definited in draft 06 7.2.2, some failures require that the server
       # abort the websocket connection rather than close cleanly
-      def abort
+      def abort(reason)
+        debug [:abort, reason]
         close_connection
       end
 
@@ -267,7 +303,7 @@ module EventMachine
           @handler.close_websocket(code, body)
         else
           # The handshake hasn't completed - should be safe to terminate
-          abort
+          abort(:handshake_incomplete)
         end
       end
 

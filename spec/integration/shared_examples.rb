@@ -29,6 +29,19 @@ shared_examples_for "a websocket server" do
     }
   end
 
+  it "should expose the remote IP address" do
+    em {
+      start_server { |ws|
+        ws.onopen {
+          ws.remote_ip.should == "127.0.0.1"
+          done
+        }
+      }
+
+      start_client
+    }
+  end
+
   it "should send messages successfully" do
     em {
       start_server { |ws|

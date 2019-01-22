@@ -108,4 +108,31 @@ describe "WebSocket server" do
       end
     }
   end
+
+  context "outbound limit set" do
+    it "should close the connection if the limit is reached" do
+      em {
+        start_server(:outbound_limit => 150) do |ws|
+          # Increase the message size by one on each loop
+          ws.onmessage{|msg| ws.send(msg + "x") }
+          ws.onclose{|status|
+            status[:code].should == 1006 # Unclean
+            status[:was_clean].should be false
+          }
+        end
+
+        EM.add_timer(0.1) do
+          ws = EventMachine::WebSocketClient.connect('ws://127.0.0.1:12345/')
+          ws.callback { ws.send_msg "hello" }
+          ws.disconnect { done } # Server closed the connection
+          ws.stream { |msg|
+            # minus frame size ? (getting 146 max here)
+            msg.data.size.should <= 150
+            # Return back the message
+            ws.send_msg(msg.data)
+          }
+        end
+      }
+    end
+  end
 end

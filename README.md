@@ -73,7 +73,7 @@ If unsure use a code in the 4xxx range. em-websocket may also close a connection
 
 ## Secure server
 
-It is possible to accept secure `wss://` connections by passing `:secure => true` when opening the connection. Pass a `:tls_options` hash containing keys as described in http://eventmachine.rubyforge.org/EventMachine/Connection.html#start_tls-instance_method
+It is possible to accept secure `wss://` connections by passing `:secure => true` when opening the connection. Pass a `:tls_options` hash containing keys as described in http://www.rubydoc.info/github/eventmachine/eventmachine/EventMachine/Connection:start_tls
 
 **Warning**: Safari 5 does not currently support prompting on untrusted SSL certificates therefore using a self signed certificate may leave you scratching your head.
 
@@ -140,7 +140,3 @@ Using flash emulation does require some minimal support from em-websocket which 
 * [Twitter AMQP WebSocket Example](http://github.com/rubenfonseca/twitter-amqp-websocket-example)
 * examples/multicast.rb - broadcast all ruby tweets to all subscribers
 * examples/echo.rb - server <> client exchange via a websocket
-
-# License
-
-The MIT License - Copyright (c) 2009-2013 Ilya Grigorik, Martyn Loughran
