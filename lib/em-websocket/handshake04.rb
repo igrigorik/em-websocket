@@ -4,7 +4,7 @@ require 'base64'
 module EventMachine
   module WebSocket
     module Handshake04
-      def self.handshake(headers, _, __)
+      def self.handshake(headers, _, __, connection)
         # Required
         unless key = headers['sec-websocket-key']
           raise HandshakeError, "sec-websocket-key header is required"
@@ -17,6 +17,11 @@ module EventMachine
         upgrade << "Upgrade: websocket"
         upgrade << "Connection: Upgrade"
         upgrade << "Sec-WebSocket-Accept: #{signature}"
+
+        if headers['sec-websocket-extensions'].include?('permessage-deflate') && headers['accept-encoding'].include?('deflate')
+          upgrade << "Sec-WebSocket-Extensions: permessage-deflate"
+          connection.f_permessage_deflate = true
+        end
 
         # TODO: Support sec-websocket-protocol
         # TODO: sec-websocket-extensions
