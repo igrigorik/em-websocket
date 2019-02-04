@@ -22,7 +22,7 @@ module EventMachine
           upgrade << "Sec-WebSocket-Protocol: #{protocol}"
         end
 
-        if headers['sec-websocket-extensions'].include?('permessage-deflate') && headers['accept-encoding'].include?('deflate')
+        if headers['sec-websocket-extensions'].include?('permessage-deflate') && (headers['accept-encoding'].include?('gzip') || headers['accept-encoding'].include?('deflate'))
           upgrade << "Sec-WebSocket-Extensions: permessage-deflate"
           connection.f_permessage_deflate = true
         end
