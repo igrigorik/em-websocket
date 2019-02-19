@@ -217,6 +217,10 @@ module EventMachine
         end
       end
       
+      def on_unbind
+        on_close
+      end
+
       def close_zlib(zlib)
         zlib.finish rescue nil
         zlib.close
