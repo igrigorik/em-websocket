@@ -4,6 +4,7 @@ module EventMachine
       include Debugger
 
       attr_writer :max_frame_size
+      attr_accessor :f_permessage_deflate
 
       # define WebSocket callbacks
       def onopen(&blk);     @onopen = blk;    end
@@ -116,7 +117,7 @@ module EventMachine
           send_flash_cross_domain_file
         else
           @handshake ||= begin
-            handshake = Handshake.new(@secure || @secure_proxy)
+            handshake = Handshake.new(@secure || @secure_proxy, self)
 
             handshake.callback { |upgrade_response, handler_klass|
               debug [:accepting_ws_version, handshake.protocol_version]

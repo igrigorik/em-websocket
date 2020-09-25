@@ -13,9 +13,10 @@ module EventMachine
       # Unfortunately drafts 75 & 76 require knowledge of whether the
       # connection is being terminated as ws/wss in order to generate the
       # correct handshake response
-      def initialize(secure)
+      def initialize(secure, connection)
         @parser = Http::Parser.new
         @secure = secure
+        @connection = connection
 
         @parser.on_headers_complete = proc { |headers|
           @headers = Hash[headers.map { |k,v| [k.downcase, v] }]
@@ -142,7 +143,7 @@ module EventMachine
           raise HandshakeError, "Protocol version #{version} not supported"
         end
 
-        upgrade_response = handshake_klass.handshake(@headers, @parser.request_url, @secure)
+        upgrade_response = handshake_klass.handshake(@headers, @parser.request_url, @secure, @connection)
 
         handler_klass = Handler.klass_factory(version)
 

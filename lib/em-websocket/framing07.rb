@@ -19,6 +19,8 @@ module EventMachine
           fin = (@data.getbyte(pointer) & 0b10000000) == 0b10000000
           # Ignoring rsv1-3 for now
           opcode = @data.getbyte(pointer) & 0b00001111
+          f_rsv1 = (@data.getbyte(pointer) & 0b01000000) == 0b01000000
+          debug ['f_rsv1', f_rsv1]
           pointer += 1
 
           mask = (@data.getbyte(pointer) & 0b10000000) == 0b10000000
@@ -111,11 +113,16 @@ module EventMachine
             # Message is complete
             if frame_type == :continuation
               @application_data_buffer << application_data
+              unpack_deflate!(@application_data_buffer) if f_rsv1 && @frame_type == :text
               message(@frame_type, '', @application_data_buffer)
               @application_data_buffer = ''
               @frame_type = nil
             else
+              unpack_deflate!(application_data) if f_rsv1 && frame_type == :text
               message(frame_type, '', application_data)
+              if frame_type == :close
+                on_close
+              end
             end
           end
         end # end while
@@ -129,10 +136,32 @@ module EventMachine
         end
 
         frame = ''
+        debug ['@connection.f_permessage_deflate', @connection.f_permessage_deflate]
+        f_do_message_deflate = frame_type == :text && @connection.f_permessage_deflate
 
         opcode = type_to_opcode(frame_type)
         byte1 = opcode | 0b10000000 # fin bit set, rsv1-3 are 0
+        if f_do_message_deflate
+          byte1 |= 0b01000000  # set rsv1
+        end
         frame << byte1
+
+        if f_do_message_deflate
+
+            @deflate ||= begin
+                min_window_bits = 9
+                max_window_bits = 15
+                level = Zlib::DEFAULT_COMPRESSION
+                mem_level = Zlib::DEF_MEM_LEVEL
+                strategy = Zlib::DEFAULT_STRATEGY
+                Zlib::Deflate.new(level, -max_window_bits, mem_level, strategy)
+            end
+            
+            debug ['application_data.length', application_data.length]
+            compressed_data = @deflate.deflate(application_data, Zlib::SYNC_FLUSH)[0...-4]
+            debug ['compressed_data.length', compressed_data.length]
+            application_data = compressed_data
+        end
 
         length = application_data.size
         if length <= 125
@@ -155,7 +184,48 @@ module EventMachine
         send_frame(:text, data)
       end
 
-      private
+      private      
+      
+      
+      def unpack_deflate!(msg)
+        debug ['(unpack_deflate!) msg.length', msg.length]
+        
+        @inflate ||= begin
+            min_window_bits = 9
+            max_window_bits = 15
+            peer_window_bits = max_window_bits
+            window_bits = [peer_window_bits, min_window_bits].max
+            level = Zlib::DEFAULT_COMPRESSION
+            mem_level = Zlib::DEF_MEM_LEVEL
+            strategy = Zlib::DEFAULT_STRATEGY
+            Zlib::Inflate.new(-window_bits)
+        end
+
+        msg.replace @inflate.inflate(msg) + @inflate.inflate([0x00, 0x00, 0xff, 0xff].pack('C*'))
+        debug ['unpacked data length', msg.length]
+      end
+      
+      def on_close
+        debug ['(framing) close zlib on close']
+        if @inflate
+          close_zlib @inflate
+          @inflate = nil
+        end
+        if @deflate
+          close_zlib @deflate
+          @deflate = nil
+        end
+      end
+      
+      def on_unbind
+        on_close
+      end
+
+      def close_zlib(zlib)
+        zlib.finish rescue nil
+        zlib.close
+      end
+
 
       FRAME_TYPES = {
         :continuation => 0,

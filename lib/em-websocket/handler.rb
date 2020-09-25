@@ -71,10 +71,15 @@ module EventMachine
       end
 
       def unbind
+        debug ['unbind']
         @state = :closed
 
         @close_timer.cancel if @close_timer
 
+        if defined? on_unbind
+          on_unbind
+        end
+        
         @close_info = defined?(@close_info) ? @close_info : {
           :code => 1006,
           :was_clean => false,
