@@ -46,6 +46,10 @@ It's possible to send a ping frame (`ws.ping(body = '')`), which the client must
 
 When receiving a ping, the server will automatically respond with a pong as the spec requires (so you should _not_ write an onping handler that replies with a pong), however it is possible to bind to ping & pong events if desired by using the `onping` and `onpong` methods.
 
+### Healthchecks
+
+It's possible to send a regular `HTTP GET` request to the `/healthcheck` endpoint and receive a `200` response from the server.
+
 ### Close codes and reasons
 
 A WebSocket connection can be closed cleanly, regardless of protocol, by calling `ws.close(code = nil, body = nil)`.
